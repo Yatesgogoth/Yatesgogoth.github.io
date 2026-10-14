@@ -325,16 +325,16 @@ p, li, dd { text-wrap: pretty; }
 .job-row:hover { background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
 .job-period { color: var(--muted); padding-top: 4px; }
 .job-company { font-family: var(--head); font-size: clamp(24px, 1.6vw, 31px); line-height: 1.15; }
-.job-logo { height: 26px; margin-bottom: 12px; display: flex; align-items: center; }
+.job-logo { height: 30px; margin-bottom: 12px; display: flex; align-items: center; }
 .job-logo img { height: 100%; width: auto; max-width: 140px; object-fit: contain; filter: grayscale(1) contrast(1.1); opacity: .8; transition: filter .4s, opacity .4s; }
 .job-row:hover .job-logo img { filter: none; opacity: 1; }
 :root[data-theme="dark"] .job-logo img, :root[data-theme="dark"] .job-row:hover .job-logo img { filter: grayscale(1) invert(1) brightness(1.4); opacity: .85; }
-.job-logo.mono-mark { width: 26px; justify-content: center; border: 1px solid var(--rule-strong); font-family: var(--serif); font-size: 12px; letter-spacing: .02em; color: var(--ink-2); }
+.job-logo.mono-mark { width: 30px; justify-content: center; border: 1px solid var(--rule-strong); font-family: var(--serif); font-size: 12px; letter-spacing: .02em; color: var(--ink-2); }
 :lang(zh) .job-company { font-size: clamp(20px, 1.35vw, 26px); font-weight: 600; }
 .job-role { font-size: clamp(14px, .9vw, 16px); color: var(--ink-2); margin-top: 4px; }
 .job-loc { font-size: 13px; color: var(--muted); }
 .job-line { font-size: clamp(15px, 1vw, 18px); color: var(--ink-2); }
-.job-line .pill { margin-top: 10px; }
+.job-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 14px; }   /* 能力标签和「阅读案例」之间留出空隙 */
 .job-kpis { display: grid; gap: 10px; }
 .job-kpis b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 1.7vw, 32px); line-height: 1; }
 .job-kpis span { font-size: clamp(12px, .75vw, 14px); color: var(--muted); }
@@ -564,7 +564,7 @@ p, li, dd { text-wrap: pretty; }
 }
 
 /* ---------- 经历条目 → 案例详情 ---------- */
-.case-link { margin-top: 12px; font-size: 14px; width: fit-content; }
+.case-link { font-size: 14px; width: fit-content; }
 .job-go { color: var(--ink); }
 .job-go svg { transition: transform .35s var(--ease); }
 .job-row:hover .job-go { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

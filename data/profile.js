@@ -1228,7 +1228,7 @@ window.PROFILE = {
         "zh": "TransFlotage",
         "en": "人造岛科技文化（深圳）"
       },
-      "logoImage": "",
+      "logoImage": "assets/logos/transflotage.png",
       "logo": "TF",
       "role": {
         "zh": "社群运营实习生",
@@ -1344,7 +1344,7 @@ window.PROFILE = {
         "zh": "东莞思科德新材料科技",
         "en": "东莞思科德新材料科技"
       },
-      "logoImage": "",
+      "logoImage": "assets/logos/scoter-icon.png",
       "logo": "SK",
       "role": {
         "zh": "跨境电商运营实习生",

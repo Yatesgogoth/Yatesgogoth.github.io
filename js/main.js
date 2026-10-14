@@ -264,8 +264,8 @@
               <div class="job-role"${E(`${P}.role`)}>${T(e.role)}</div>
               <div class="job-loc"${E(`${P}.location`)}>${T(e.location)}</div>
             </div>
-            <div class="job-line"${E(`${P}.oneLiner`)}>${T(e.oneLiner || e.summary)}${has(e.capability) ? `<br><span class="pill">${T(e.capability)}</span>` : ''}
-              ${caseObj ? `<a class="link case-link" href="${caseHref(caseObj.id)}" data-route="${esc(caseObj.id)}">${ui('caseStudy')} ${icon('arrow')}</a>` : ''}</div>
+            <div class="job-line"><p${E(`${P}.oneLiner`)}>${T(e.oneLiner || e.summary)}</p>
+              ${has(e.capability) || caseObj ? `<div class="job-tags">${has(e.capability) ? `<span class="pill"${E(`${P}.capability`)}>${T(e.capability)}</span>` : ''}${caseObj ? `<a class="link case-link" href="${caseHref(caseObj.id)}" data-route="${esc(caseObj.id)}">${ui('caseStudy')} ${icon('arrow')}</a>` : ''}</div>` : ''}</div>
             <div class="job-kpis">${list(e.metrics).map((m, mi) => [m, mi]).filter(([m]) => has(m.value)).slice(0, 2).map(([m, mi]) => `<div${E(`${P}.metrics.${mi}`)}><b>${T(m.value)}</b><span>${T(m.label)}</span></div>`).join('')}</div>
             ${caseObj
               ? `<a class="job-toggle job-go" href="${caseHref(caseObj.id)}" data-route="${esc(caseObj.id)}" aria-label="${ui('caseStudy')} — ${plain(e.company)}">${icon('arrow')}</a>`
