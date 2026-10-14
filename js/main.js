@@ -23,6 +23,7 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const params = new URLSearchParams(location.search);
   const IS_PREVIEW = params.has('preview');
+  let route = params.get('case') || '';   // 非空 = 正在看某个案例详情页
 
   let DATA = window.PROFILE || {};
   if (params.has('draft')) { try { const d = store.get('profile-draft'); if (d) DATA = JSON.parse(d); } catch (e) { /* 草稿损坏时用文件版本 */ } }
@@ -65,25 +66,51 @@
   const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[n] || ICONS.arrow}</svg>`;
   const seal = () => `<span class="seal" aria-hidden="true">${T((DATA.basics || {}).initials) || 'TH'}</span>`;
 
+  /* 像素印章：3×5 像素字体拼出缩写，外框也是像素；开场结束时由散落的像素聚合而成 */
+  const PIX = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '110101110100100', Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101', Y: '101101010010010', Z: '111001010100111' };
+  function pixelSeal() {
+    const ini = String(t((DATA.basics || {}).initials) || 'TH').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+    if (!ini) return seal();
+    const lw = ini.length * 4 - 1, N = Math.max(13, lw + 6), ox = Math.floor((N - lw) / 2), oy = Math.floor((N - 5) / 2);
+    const px = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!x || !y || x === N - 1 || y === N - 1) px.push([x, y]);
+    [...ini].forEach((c, k) => { for (let i = 0; i < 15; i++) if (PIX[c][i] === '1') px.push([ox + k * 4 + (i % 3), oy + Math.floor(i / 3)]); });
+    return `<span class="seal px-seal" aria-hidden="true"><svg viewBox="0 0 ${N} ${N}">${px.map(([x, y]) => `<rect x="${x + 0.08}" y="${y + 0.08}" width=".84" height=".84"/>`).join('')}</svg></span>`;
+  }
+
+  /* 首屏大标题：把「轮播关键词」的最后一个词替换成可轮播的位置；找不到这个词就按原样显示 */
+  function headlineHtml(b) {
+    const words = list((DATA.hero || {}).rotatingWords).map((w) => String(t(w)).trim()).filter(Boolean);
+    const raw = String(t(b.headline) || ''), fin = words[words.length - 1], at = fin ? raw.indexOf(fin) : -1;
+    if (words.length < 2 || at < 0) return rich(b.headline);
+    const slot = `<span class="rot" data-rot><span class="rot-strut">&#8203;</span>${words.map((w, i) => `<span class="rot-w"${i === words.length - 1 ? ' data-final' : ''}>${esc(w)}</span>`).join('')}</span>`;
+    return rich(raw.slice(0, at)) + slot + rich(raw.slice(at + fin.length));
+  }
+  const universeHtml = () => {
+    const photos = list((DATA.hero || {}).universePhotos).map(t).filter(Boolean);
+    return photos.length ? `<div class="universe" aria-hidden="true"${E('hero.universePhotos')}><div class="u-stage">${photos.map((p) => `<figure class="u-card"><img src="${esc(p)}" alt="" decoding="async" /></figure>`).join('')}</div></div>` : '';
+  };
+
   /* ================= 2. 渲染 ================= */
   const app = $('#app');
   const secIndex = (id) => list(DATA.sections).findIndex((s) => s && s.id === id);
   const enLabel = (s) => String((s.nav && s.nav.en) || (s.title && String(s.title.en || '').replace(/\*/g, '')) || s.id);
 
-  function renderNav(sections) {
+  function renderNav(sections, away) {
     const b = DATA.basics || {};
+    const to = (id) => (away ? `./#${id}" data-route="" data-hash="${id}` : `#${id}`);   // 案例页里，导航链接回到首页对应板块
     return `
     <a class="skip" href="#main">${lang === 'zh' ? '跳到正文' : 'Skip to content'}</a>
     <nav class="nav" id="nav" aria-label="${lang === 'zh' ? '主导航' : 'Primary'}">
       <div class="wrap nav-row">
-        <a class="brand" href="#top"${E('basics.brand')}>${seal()}<span class="brand-name">${plain(b.brand || b.name)}</span></a>
+        <a class="brand" href="${to('top')}"${E('basics.brand')}>${seal()}<span class="brand-name">${plain(b.brand || b.name)}</span></a>
         <div class="nav-links" id="nav-links">
-          ${sections.map((s, i) => `<a href="#${esc(s.id)}" data-link="${esc(s.id)}"${E(`sections.${secIndex(s.id)}.nav`)}><span class="n">${pad(i + 1)}</span>${T(s.nav || s.title)}</a>`).join('')}
+          ${sections.map((s, i) => `<a href="${to(esc(s.id))}" data-link="${esc(s.id)}"${E(`sections.${secIndex(s.id)}.nav`)}><span class="n">${pad(i + 1)}</span>${T(s.nav || s.title)}</a>`).join('')}
         </div>
         <div class="nav-tools">
           <button class="lang-btn" data-lang-toggle aria-label="${lang === 'zh' ? 'Switch to English' : '切换到中文'}">${lang === 'zh' ? '<b>中</b> / EN' : '中 / <b>EN</b>'}</button>
           <button class="icon-btn theme-btn" id="theme-btn" aria-label="${lang === 'zh' ? '切换深浅色' : 'Toggle dark mode'}"><span class="moon">${icon('moon')}</span><span class="sun">${icon('sun')}</span></button>
-          ${sections.some((s) => s.id === 'contact') ? `<a class="nav-cta" href="#contact">${ui('ctaContact')} ${icon('arrowUR')}</a>` : ''}
+          ${sections.some((s) => s.id === 'contact') ? `<a class="nav-cta" href="${to('contact')}">${ui('ctaContact')} ${icon('arrowUR')}</a>` : ''}
           <button class="icon-btn menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">${icon('menu')}</button>
         </div>
       </div>
@@ -94,28 +121,23 @@
     const b = DATA.basics || {};
     return `
     <header class="hero" id="top" data-anchor="top">
+      ${universeHtml()}
       <div class="wrap">
-        <div class="hero-meta mono rv">
-          ${has(b.status) ? `<span class="status"${E('basics.status')}><i aria-hidden="true"></i>${T(b.status)}</span>` : ''}
-          ${has(b.credential) ? `<span${E('basics.credential')}>${T(b.credential)}</span>` : ''}
-          ${has(b.location) ? `<span${E('basics.location')}>${T(b.location)}</span>` : ''}
-          <span class="clock-wrap">${ui('localTime')} <span data-clock>--:--</span></span>
-        </div>
         <div class="hero-grid">
           <div>
-            <p class="hero-name rv"${E('basics.name')}>${seal()}<span><strong>${plain(b.name)}</strong>&nbsp; ${plain(b.altName)}</span></p>
-            <h1 class="hero-title rv" style="--d:1"${E('basics.headline')}>${rich(b.headline)}</h1>
-            ${has(b.tagline) ? `<p class="hero-lede rv" style="--d:2"${E('basics.tagline')}>${T(b.tagline)}</p>` : ''}
+            <p class="hero-name rv"${E('basics.name')}>${pixelSeal()}<span><strong>${plain(b.name)}</strong>&nbsp; ${plain(b.altName)}</span></p>
+            <h1 class="hero-title rv" style="--d:1" aria-label="${plain(b.headline)}"${E('basics.headline')}>${headlineHtml(b)}</h1>
+            ${has(b.slogan) ? `<p class="hero-slogan rv" style="--d:2"${E('basics.slogan')}>${rich(b.slogan)}</p>` : ''}
             <div class="hero-cta rv" style="--d:3">
-              ${hasWork ? `<a class="btn primary" href="#work"${E('ui.ctaWork')}>${ui('ctaWork')} ${icon('arrow')}</a>` : ''}
+              ${hasWork ? `<a class="btn primary" href="#experience"${E('ui.ctaWork')}>${ui('ctaWork')} ${icon('arrow')}</a>` : ''}
               ${has(b.resume) ? `<a class="btn" href="${esc(t(b.resume))}" download${E('basics.resume')}>${ui('downloadCv')} ${icon('arrowDown')}</a>` : ''}
               <a class="link" href="#contact"${E('ui.ctaContact')}>${ui('ctaContact')} ${icon('arrowUR')}</a>
             </div>
           </div>
           ${has(b.avatar) ? `
           <figure class="portrait rv" style="--d:1"${E('basics.avatar')}>
+            <span class="orbit" aria-hidden="true"><i></i></span>
             <div class="frame img-rv"><img src="${esc(t(b.avatar))}" alt="${T(b.avatarAlt) || plain(b.name)}" fetchpriority="high" /></div>
-            <figcaption class="mono"><span>Fig. 00</span><span${E('basics.portraitCaption')}>${T(b.portraitCaption)}</span></figcaption>
           </figure>` : ''}
         </div>
         ${list(DATA.stats).some((s) => has(s.value)) ? `
@@ -222,49 +244,6 @@
   }
 
   const RENDERERS = {
-    /* B. 精选成果 */
-    work() {
-      if (!list(DATA.cases).some((c) => has(c.title))) return '';
-      return each(DATA.cases, (c) => has(c.title), (c, i) => {
-        const P = `cases.${i}`; const id = esc(c.id || `case-${i + 1}`);
-        return `
-        <article class="case tone-${esc(c.tone || 'paper')}" id="case-${id}" data-anchor="case-${id}" aria-labelledby="case-${id}-t"${E(P)}>
-          <div class="case-meta mono rv">
-            <span class="case-no"${E(`${P}.label`)}>${T(c.label)}</span>
-            <span${E(`${P}.company`)}>${T(c.company)}</span>
-            <span${E(`${P}.period`)}>${T(c.period)}</span>
-            <span${E(`${P}.sector`)}>${T(c.sector)}</span>
-          </div>
-          <div class="case-grid">
-            <div>
-              <h3 class="case-title rv" id="case-${id}-t"${E(`${P}.title`)}>${rich(c.title)}</h3>
-              ${has(c.summary) ? `<p class="case-summary rv" style="--d:1"${E(`${P}.summary`)}>${T(c.summary)}</p>` : ''}
-              <div class="rv" style="--d:2">${kpisHtml(c.metrics, `${P}.metrics`, 4)}</div>
-            </div>
-            ${visualHtml(c, i)}
-          </div>
-          <div class="crao rv">
-            <div${E(`${P}.challenge`)}><h4>${ui('challenge')}</h4><p>${T(c.challenge)}</p></div>
-            <div${E(`${P}.role`)}><h4>${ui('role')}</h4><p>${T(c.role)}</p></div>
-            <div${E(`${P}.approach`)}><h4>${ui('approach')}</h4><ul>${list(c.approach).filter((a) => has(a.title)).map((a) => `<li>${T(a.title)}</li>`).join('')}</ul></div>
-            <div${E(`${P}.outcome`)}><h4>${ui('outcome')}</h4><p>${T(c.outcome)}</p></div>
-          </div>
-          <div class="case-more">
-            <button class="toggle" aria-expanded="false" aria-controls="full-${id}" data-open="${ui('closeCase')}" data-closed="${ui('readCase')}"><span>${ui('readCase')}</span><span class="pm" aria-hidden="true"></span></button>
-            <div class="collapse" id="full-${id}"><div>
-              <div class="case-full">
-                <div><h4 class="mono muted" style="font-size:11px;margin:0 0 6px">${ui('approach')}</h4>${stepsHtml(c.approach, `${P}.approach`)}</div>
-                <div class="full-side">
-                  <h4>${ui('allResults')}</h4>${kpisHtml(c.metrics, `${P}.metrics`)}
-                  ${list(c.tools).some(has) ? `<h4 style="margin-top:22px">${ui('tools')}</h4>${tagsHtml(c.tools, `${P}.tools`)}` : ''}
-                </div>
-              </div>
-            </div></div>
-          </div>
-        </article>`;
-      });
-    },
-
     /* C. 职业轨迹 */
     experience() {
       const items = list(DATA.experience).map((e, i) => [e, i]).filter(([e]) => has(e.company));
@@ -280,13 +259,17 @@
           <div class="job-row">
             <div class="job-period mono"${E(`${P}.period`)}>${T(e.period)}</div>
             <div class="job-who">
+              ${has(e.logoImage) || has(e.logo) ? `<div class="job-logo${has(e.logoImage) ? '' : ' mono-mark'}"${E(`${P}.${has(e.logoImage) ? 'logoImage' : 'logo'}`)}>${has(e.logoImage) ? `<img src="${esc(t(e.logoImage))}" alt="${plain(e.company)} logo" loading="lazy" />` : T(e.logo)}</div>` : ''}
               <h3 class="job-company"${E(`${P}.company`)}>${T(e.company)}</h3>
               <div class="job-role"${E(`${P}.role`)}>${T(e.role)}</div>
               <div class="job-loc"${E(`${P}.location`)}>${T(e.location)}</div>
             </div>
-            <div class="job-line"${E(`${P}.oneLiner`)}>${T(e.oneLiner || e.summary)}${has(e.capability) ? `<br><span class="pill">${T(e.capability)}</span>` : ''}</div>
+            <div class="job-line"${E(`${P}.oneLiner`)}>${T(e.oneLiner || e.summary)}${has(e.capability) ? `<br><span class="pill">${T(e.capability)}</span>` : ''}
+              ${caseObj ? `<a class="link case-link" href="${caseHref(caseObj.id)}" data-route="${esc(caseObj.id)}">${ui('caseStudy')} ${icon('arrow')}</a>` : ''}</div>
             <div class="job-kpis">${list(e.metrics).map((m, mi) => [m, mi]).filter(([m]) => has(m.value)).slice(0, 2).map(([m, mi]) => `<div${E(`${P}.metrics.${mi}`)}><b>${T(m.value)}</b><span>${T(m.label)}</span></div>`).join('')}</div>
-            <button class="job-toggle" aria-expanded="false" aria-controls="jd-${i}" aria-label="${ui('showMore')} — ${plain(e.company)}"><span class="pm" aria-hidden="true"></span></button>
+            ${caseObj
+              ? `<a class="job-toggle job-go" href="${caseHref(caseObj.id)}" data-route="${esc(caseObj.id)}" aria-label="${ui('caseStudy')} — ${plain(e.company)}">${icon('arrow')}</a>`
+              : `<button class="job-toggle" aria-expanded="false" aria-controls="jd-${i}" aria-label="${ui('showMore')} — ${plain(e.company)}"><span class="pm" aria-hidden="true"></span></button>`}
           </div>
           <div class="collapse" id="jd-${i}"><div>
             <div class="job-detail">
@@ -294,7 +277,6 @@
               <div class="job-detail-foot">
                 ${list(e.details).some(has) ? `<ul class="extra"${E(`${P}.details`)}>${list(e.details).filter(has).map((d) => `<li>${T(d)}</li>`).join('')}</ul>` : ''}
                 ${tagsHtml(e.tags, `${P}.tags`)}
-                ${caseObj ? `<a class="link" href="#case-${esc(caseObj.id)}">${ui('viewCase')} · ${T(caseObj.label)} ${icon('arrow')}</a>` : ''}
               </div>
             </div>
           </div></div>
@@ -447,6 +429,46 @@
     }
   };
 
+  /* 案例详情页（index.html?case=anker）：首页只放经历摘要，完整故事在这里按「挑战 → 角色 → 方法 → 结果」讲 */
+  const caseHref = (id) => { const u = new URLSearchParams(location.search); u.set('case', id); return '?' + esc(u.toString()); };
+  function casePage(c) {
+    const ci = list(DATA.cases).indexOf(c), P = `cases.${ci}`;
+    const exp = list(DATA.experience).find((e) => e.caseId === c.id);
+    const ei = list(DATA.experience).indexOf(exp), EP = `experience.${ei}`;
+    const block = (label, body, path) => (body ? `<section class="cs-block rv"${path ? E(path) : ''}><h2 class="cs-label mono">${label}</h2><div class="cs-content">${body}</div></section>` : '');
+    const others = list(DATA.cases).filter((x) => has(x.title));
+    const next = others[(others.indexOf(c) + 1) % others.length];
+    return `
+    <article class="cs" data-anchor="case-top">
+      <div class="wrap">
+        <a class="cs-back mono" href="./#experience" data-route="" data-hash="experience">${icon('arrowL')} ${ui('backToWork')}</a>
+        <header class="cs-head">
+          <div class="case-meta mono rv">
+            <span class="case-no"${E(`${P}.label`)}>${T(c.label)}</span><span${E(`${P}.company`)}>${T(c.company)}</span>
+            <span${E(`${P}.period`)}>${T(c.period)}</span><span${E(`${P}.sector`)}>${T(c.sector)}</span>
+          </div>
+          <h1 class="cs-title rv"${E(`${P}.title`)}>${rich(c.title)}</h1>
+          ${has(c.summary) ? `<p class="cs-summary rv" style="--d:1"${E(`${P}.summary`)}>${T(c.summary)}</p>` : ''}
+        </header>
+        <div class="cs-kpis rv" style="--d:2">${kpisHtml(c.metrics, `${P}.metrics`)}</div>
+        <div class="cs-visual">${visualHtml(c, ci)}</div>
+        <div class="cs-body">
+          ${block(ui('challenge'), has(c.challenge) ? `<p class="cs-lead">${T(c.challenge)}</p>` : '', `${P}.challenge`)}
+          ${block(ui('role'), has(c.role) ? `<p>${T(c.role)}</p>` : '', `${P}.role`)}
+          ${block(ui('approach'), stepsHtml(c.approach, `${P}.approach`))}
+          ${block(ui('outcome'), has(c.outcome) ? `<p class="cs-lead">${T(c.outcome)}</p>` : '', `${P}.outcome`)}
+          ${exp ? block(ui('inDetail'), stepsHtml(exp.bullets, `${EP}.bullets`) + (list(exp.details).some(has) ? `<ul class="extra"${E(`${EP}.details`)}>${list(exp.details).filter(has).map((d) => `<li>${T(d)}</li>`).join('')}</ul>` : '')) : ''}
+          ${block(ui('tools'), tagsHtml(c.tools, `${P}.tools`))}
+        </div>
+        ${next && next !== c ? `
+        <a class="cs-next rv" href="${caseHref(next.id)}" data-route="${esc(next.id)}">
+          <span class="mono">${ui('nextCase')} · ${T(next.label)}</span>
+          <b>${rich(next.title)}</b>${icon('arrow')}
+        </a>` : ''}
+      </div>
+    </article>`;
+  }
+
   function wrapSection(s, n, out) {
     const res = typeof out === 'string' ? { body: out } : out;
     const si = secIndex(s.id);
@@ -471,12 +493,15 @@
     const showEditor = meta().showEditorLink !== false && !IS_PREVIEW;
     return `
     <footer class="footer">
+      <div class="wrap foot-sign">
+        <a class="brand" href="${route ? './' : '#top'}"${route ? ' data-route=""' : ''}>${seal()}<span>${plain(b.brand || b.name)}</span></a>
+        ${has(b.slogan) ? `<p class="foot-slogan"${E('basics.slogan')}>${rich(b.slogan)}</p>` : ''}
+      </div>
       <div class="wrap foot-row">
-        <a class="brand" href="#top">${seal()}<span>${plain(b.brand || b.name)}</span></a>
         <span class="mono">© ${new Date().getFullYear()} · ${ui('footerNote')}</span>
         <div class="foot-links mono">
           <button data-lang-toggle>${lang === 'zh' ? 'English' : '中文'}</button>
-          <a href="#top">${ui('backToTop')} ↑</a>
+          <a href="#" data-top>${ui('backToTop')} ↑</a>
           ${showEditor ? `<a href="editor/index.html">${ui('editLink')}</a>` : ''}
         </div>
       </div>
@@ -518,7 +543,12 @@
 
     teardown();
     document.documentElement.classList.toggle('photos-mono', meta().photoStyle === 'mono');
-    app.innerHTML = renderNav(visible) + '<main id="main">' + renderHero(visible.some((s) => s.id === 'work')) + blocks.join('') + '</main>' + renderFooter() + lightboxHtml();
+    const cs = route && list(DATA.cases).find((c) => c && c.id === route && has(c.title));
+    if (route && !cs) route = '';
+    if (cs) document.title = String(t(cs.title)).replace(/\*/g, '') + ' · ' + plain((DATA.basics || {}).brand || (DATA.basics || {}).name);
+    app.innerHTML = cs
+      ? renderNav(visible, true) + '<main id="main">' + casePage(cs) + '</main>' + renderFooter() + lightboxHtml()
+      : renderNav(visible) + '<main id="main">' + renderHero(visible.some((s) => s.id === 'experience')) + blocks.join('') + '</main>' + renderFooter() + lightboxHtml();
     bindUI();
     if (started) startMotion(opts.instant);
     if (IS_PREVIEW && focusPath) setFocus(focusPath, false);
@@ -533,7 +563,7 @@
     if (el.hasAttribute('data-count')) $$('.count', el).forEach((c) => countUp(c, instant));
   }
   function initReveal(instant) {
-    const els = $$('.rv, .img-rv, [data-viz]');
+    const els = $$('.rv, .img-rv, [data-viz]').filter((el) => !el.closest('.hero.intro'));   // 首屏开场期间由开场动画负责显示
     if (instant || reduceMotion || !('IntersectionObserver' in window)) { els.forEach((el) => reveal(el, true)); return; }
     const targets = new Map();   // 被 clip-path 裁掉的图片观察父元素
     const io = new IntersectionObserver((entries) => entries.forEach((en) => {
@@ -626,6 +656,21 @@
     setTimeout(apply, 220);
   }
 
+  /* 首页 ⇄ 案例页：用 history 切换，不重新加载页面（也不会重播开场） */
+  function go(id, hash, push) {
+    route = id || '';
+    if (push !== false) {
+      const u = new URL(location.href);
+      if (route) u.searchParams.set('case', route); else u.searchParams.delete('case');
+      u.hash = hash || '';
+      history.pushState(null, '', u);
+    }
+    render({ instant: true });
+    const el = hash && document.getElementById(hash);
+    if (el) el.scrollIntoView(); else window.scrollTo(0, 0);
+  }
+  window.addEventListener('popstate', () => { const p = new URLSearchParams(location.search); go(p.get('case'), location.hash.slice(1), false); });
+
   function bindUI() {
     const nav = $('#nav'), menu = $('#menu-btn');
     const closeMenu = () => { nav.classList.remove('open'); if (menu) { menu.innerHTML = icon('menu'); menu.setAttribute('aria-expanded', 'false'); } };
@@ -635,7 +680,12 @@
     const tb = $('#theme-btn');
     if (tb) tb.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; store.set('site-theme', theme); applyTheme(); });
     $$('.toggle, .job-toggle').forEach((btn) => btn.addEventListener('click', () => setOpen(btn, btn.getAttribute('aria-expanded') !== 'true')));
-    const onClick = (e) => { const el = e.target.closest('[data-copy]'); if (!el) return; e.preventDefault(); copyText(el.getAttribute('data-copy')); };
+    const onClick = (e) => {
+      const r = e.target.closest('a[data-route]');
+      if (r && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(r.dataset.route, r.dataset.hash); return; }
+      if (e.target.closest('[data-top]')) { e.preventDefault(); window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; }
+      const el = e.target.closest('[data-copy]'); if (!el) return; e.preventDefault(); copyText(el.getAttribute('data-copy'));
+    };
     app.addEventListener('click', onClick);
     cleanups.push(() => app.removeEventListener('click', onClick));
   }
@@ -722,7 +772,188 @@
     cleanups.push(() => app.removeEventListener('click', onZoom));
   }
 
+  /* ---------- 首屏「照片宇宙」（v5） ----------
+   * 首次访问：照片从远处飞入 → 每换一个轮播词，照片重新排成一个阵型 → 收拢到肖像位置
+   *          → 像素印章聚合、其余首屏内容出现 → 照片退到背景里慢慢漂浮。全程 ≤ 2.5 秒，点击 / 滚动 / 按键可快进。
+   * 再次访问、切换语言、编辑器预览：直接是最终状态。减少动态效果（reduced motion）：静止、无开场。 */
+  const FORMS = {
+    // 每张照片：[横向, 纵向（以肖像尺寸为单位，0 = 肖像中心）, 纵深 px, 左右转角, 平面转角, 缩放]
+    cloud: [[-0.62, -0.38, -140, 18, -6, 0.92], [0.42, -0.52, 60, -14, 5, 1], [0.66, 0.12, -40, -22, 3, 0.96], [0.18, 0.56, 110, -8, -4, 1.04], [-0.4, 0.42, 0, 16, 6, 0.9], [-0.02, -0.04, -300, 0, -2, 0.86], [-1, 0.02, -260, 24, -8, 0.84]],
+    shelf: (i) => [[-0.78, -0.26, 0.26, 0.78, -0.52, 0, 0.52][i % 7], i % 7 < 4 ? -0.3 : 0.32, 0, 0, 0, 0.74],
+    arc: (i, n) => { const a = (n > 1 ? -60 + (120 * i) / (n - 1) : 0) * Math.PI / 180; return [1.05 * Math.sin(a), 0.4 - 0.36 * Math.cos(a), -380 * (1 - Math.cos(a)), (a * 180 / Math.PI) * 0.7, 0, 0.78]; },
+    ring: (i, n) => { if (i === n - 1) return [0, 0, -220, 0, 0, 0.8]; const a = (i / (n - 1)) * Math.PI * 2 - Math.PI / 2; return [0.9 * Math.cos(a), 0.62 * Math.sin(a), i % 2 ? 80 : -80, 0, (i % 3 - 1) * 4, 0.76]; },
+    stack: (i) => [((i * 37) % 9 - 4) / 100, ((i * 53) % 9 - 4) / 100, -i * 8, 0, ((i * 47) % 13) - 6, 0.94]
+  };
+  const FORM_ORDER = ['cloud', 'shelf', 'arc', 'ring'];
+  // 开场结束后照片退到背景的纵深（px，越负越远越小）；位置由 freeSpots() 自动找首屏里没有文字的空白处
+  const DRIFT_Z = [-520, -680, -460, -720, -540, -620, -580];
+  const PERSPECTIVE = 1200;
+
+  let forceIntro = false;   // 编辑器里点「重播开场」时为 true
+  function initHero(instant) {
+    const hero = $('.hero'); if (!hero) return;
+    const G = window.gsap, cards = $$('.u-card', hero), stage = $('.u-stage', hero);
+    const rot = $('[data-rot]', hero), words = rot ? $$('.rot-w', rot) : [];
+    const sealEl = $('.px-seal', hero), pixels = sealEl ? $$('rect', sealEl) : [];
+    const cfg = DATA.hero || {};
+    const motion = !!G && !reduceMotion;
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const full = motion && cards.length > 0 && (forceIntro
+      || (!instant && !IS_PREVIEW && cfg.playIntro !== false && (params.has('intro') || !store.get('intro-v5-seen'))));
+    let tl = null, drifting = [], cancelled = false;
+
+    const geo = () => {
+      const hb = hero.getBoundingClientRect(), pf = $('.portrait .frame', hero);
+      let cx = hb.width * 0.72, cy = hb.height * 0.45, W = hb.width * 0.3, H = W * 1.25;
+      if (pf) { const r = pf.getBoundingClientRect(); cx = r.left - hb.left + r.width / 2; cy = r.top - hb.top + r.height / 2; W = r.width; H = r.height; }
+      const narrow = hb.width < 700;   // 手机：阵型占满肖像区域，卡片相对大一些
+      // 手机上肖像在标题下方、可能在屏幕外：开场阵型放在标题下方的可见区域里
+      const ttl = $('.hero-title', hero);
+      if (narrow && ttl) { const tb = ttl.getBoundingClientRect().bottom - hb.top, vis = window.innerHeight - hb.top; if (vis - tb > 160) cy = Math.min(cy, (tb + vis) / 2 + 10); }
+      const ux = Math.min(W, hb.width * (narrow ? 0.42 : 0.32)), uy = Math.min(H * 0.8, ux * 1.1);
+      const g = { w: hb.width, h: hb.height, cx, cy, ux, uy, cw: clamp(ux * (narrow ? 0.62 : 0.48), 92, 210) };
+      g.spots = freeSpots(g, hb);
+      return g;
+    };
+    // 背景照片的落点：在首屏里打格子，优先选不压到文字 / 肖像 / 数字的格子，并且彼此分散
+    const freeSpots = (g, hb) => {
+      const boxes = $$('.hero-slogan, .hero-name, .hero-title, .hero-cta, .portrait, .proof', hero).map((el) => {
+        const r = el.getBoundingClientRect(); return [r.left - hb.left - 14, r.top - hb.top - 14, r.right - hb.left + 14, r.bottom - hb.top + 14];
+      });
+      const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+      const cols = 10, rows = 8, cand = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const x = ((c + 0.5) / cols) * g.w, y = top + ((r + 0.5) / rows) * (g.h - top);
+        const sw = g.cw * 0.66, sh = sw * 0.8, a = [x - sw / 2, y - sh / 2, x + sw / 2, y + sh / 2];
+        let ov = 0;
+        boxes.forEach((b) => { ov += Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1])); });
+        cand.push({ x, y, ov: ov / (sw * sh) });
+      }
+      cand.sort((p, q) => p.ov - q.ov || q.x - p.x);
+      const picks = [];
+      for (let gap = Math.max(g.w, g.h) / 4; picks.length < cards.length && gap > 1; gap *= 0.7) {
+        cand.forEach((p) => { if (picks.length < cards.length && !picks.includes(p) && picks.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= gap)) picks.push(p); });
+      }
+      return picks;
+    };
+    // 把「阵型」换算成每张卡片的位置
+    const formState = (name, i, n, g) => {
+      const f = FORMS[name], v = typeof f === 'function' ? f(i, n) : f[i % f.length];
+      return { x: g.cx + v[0] * g.ux, y: g.cy + v[1] * g.uy, z: v[2], rotationY: v[3], rotationZ: v[4], scale: v[5], autoAlpha: 1, filter: 'blur(0px)' };
+    };
+    const driftState = (i, g) => {
+      const p = g.spots[i] || { x: g.w / 2, y: g.h / 2, ov: 1 }, z = DRIFT_Z[i % DRIFT_Z.length], k = (PERSPECTIVE - z) / PERSPECTIVE;
+      const free = p.ov < 0.08, dark = theme === 'dark';
+      // 透视会把远处的卡片往中心拉、并缩小：反算位置，让它在屏幕上正好落在空白格子里
+      return { x: g.w / 2 + (p.x - g.w / 2) * k, y: g.h / 2 + (p.y - g.h / 2) * k, z, rotationY: ((i * 29) % 21) - 10, rotationZ: ((i * 41) % 17) - 8, scale: 1,
+        // 压到文字的照片：电脑上很淡，手机上直接隐藏
+        autoAlpha: free ? (dark ? 0.5 : 0.7) : g.w < 700 ? 0 : (dark ? 0.16 : 0.22), filter: `blur(${fine ? (free ? 0.8 : 2.4) : 0}px)` };
+    };
+    const place = (el, s) => {
+      if (G) { G.set(el, Object.assign({ xPercent: -50, yPercent: -50 }, s)); return; }
+      el.style.transform = `translate(-50%,-50%) translate3d(${s.x}px,${s.y}px,${s.z}px) rotateY(${s.rotationY}deg) rotateZ(${s.rotationZ}deg) scale(${s.scale})`;
+      el.style.opacity = s.autoAlpha; el.style.filter = s.filter;
+    };
+    const setSize = (g) => hero.style.setProperty('--cw', Math.round(g.cw) + 'px');
+    const sizeCards = () => cards.forEach((c) => { const img = $('img', c); const fit = () => { if (img.naturalWidth) c.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight; }; img.complete ? fit() : img.addEventListener('load', fit, { once: true }); });
+
+    const startDrift = () => {
+      if (!motion) return;
+      drifting = cards.map((c, i) => G.to(c, { x: `+=${((i * 13) % 40) - 20}`, y: `+=${((i * 17) % 30) - 15}`, rotationZ: `+=${((i * 7) % 7) - 3}`,
+        duration: 6 + (i % 4) * 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: (i % 3) * 0.4 }));
+    };
+    const settle = () => { const g = geo(); setSize(g); cards.forEach((c, i) => place(c, driftState(i, g))); };
+    const assembleSeal = (fast) => {
+      if (!pixels.length || !motion) return null;
+      sealEl.classList.add('charging');
+      return G.fromTo(pixels, { x: () => G.utils.random(-28, 28), y: () => G.utils.random(-22, 22), autoAlpha: 0 },
+        { x: 0, y: 0, autoAlpha: 1, duration: 0.45, ease: 'power3.out', stagger: { amount: fast ? 0.25 : 0.3, from: 'random' },
+          onComplete: () => sealEl.classList.remove('charging') });
+    };
+
+    sizeCards();
+    // 窗口大小改变：重新计算背景照片的位置
+    let rz;
+    const onResize = () => { clearTimeout(rz); rz = setTimeout(() => { if (tl && tl.isActive()) return; drifting.forEach((d) => d.kill()); settle(); startDrift(); }, 200); };
+    window.addEventListener('resize', onResize);
+    // 鼠标视差：整个照片宇宙随鼠标轻微转动（只在电脑上）
+    let onMove = null;
+    if (motion && fine && stage) {
+      G.set(stage, { transformOrigin: '50% 50%' });
+      const ry = G.quickTo(stage, 'rotationY', { duration: 1.2, ease: 'power3' }), rx = G.quickTo(stage, 'rotationX', { duration: 1.2, ease: 'power3' });
+      onMove = (e) => { ry((e.clientX / window.innerWidth - 0.5) * 8); rx((e.clientY / window.innerHeight - 0.5) * -6); };
+      window.addEventListener('pointermove', onMove, { passive: true });
+    }
+    cleanups.push(() => {
+      cancelled = true; clearTimeout(rz);
+      window.removeEventListener('resize', onResize);
+      if (onMove) window.removeEventListener('pointermove', onMove);
+      if (tl) tl.kill();
+      if (G) { drifting.forEach((d) => d.kill()); G.killTweensOf(pixels); }
+    });
+
+    if (!full) {
+      settle();
+      if (motion && !instant) { G.from(cards, { autoAlpha: 0, duration: 1, stagger: 0.06, ease: 'power2.out' }); assembleSeal(true); }
+      startDrift();
+      return;
+    }
+
+    /* ----- 完整开场 ----- */
+    store.set('intro-v5-seen', '1');
+    hero.classList.add('intro');            // 其余首屏元素先隐藏，由开场结束时显示
+    const title = $('.hero-title', hero); if (title) title.classList.add('in');
+    if (pixels.length) G.set(pixels, { autoAlpha: 0 });
+    const n = cards.length, nw = words.length;
+    let g = geo(); setSize(g);
+    cards.forEach((c, i) => { const s = formState('cloud', i, n, g); place(c, Object.assign(s, { x: g.cx + (s.x - g.cx) * 1.8, y: g.cy + (s.y - g.cy) * 1.8, z: -1600, autoAlpha: 0 })); });
+
+    // 关键词：先量好每个词的宽度，轮播时让位置宽度平滑变化
+    let widths = [];
+    const prepWords = () => {
+      if (nw < 2) return;
+      widths = words.map((w) => w.getBoundingClientRect().width);
+      rot.classList.add('live');
+      rot.style.width = widths[0] + 'px';
+      G.set(words, { autoAlpha: 0 }); G.set(words[0], { autoAlpha: 1 });
+    };
+    const finishWords = () => { if (nw < 2) return; rot.classList.remove('live'); rot.style.width = ''; G.set(words, { clearProps: 'all' }); };
+
+    const skipKeys = ['pointerdown', 'wheel', 'touchstart', 'keydown'];
+    const skip = () => { if (tl) tl.timeScale(6); skipKeys.forEach((k) => window.removeEventListener(k, skip)); };
+    const run = () => {
+      if (cancelled) return;
+      g = geo(); setSize(g);
+      prepWords();
+      const steps = Math.max(1, nw - 1), step = Math.min(0.42, 1.2 / steps), t0 = 0.55;
+      tl = G.timeline({ defaults: { ease: 'power3.inOut' }, onComplete: () => { skip(); hero.classList.remove('intro'); startDrift(); } });
+      tl.to(cards, { x: (i) => formState('cloud', i, n, g).x, y: (i) => formState('cloud', i, n, g).y, z: (i) => formState('cloud', i, n, g).z,
+        autoAlpha: 1, duration: 0.7, ease: 'power3.out', stagger: 0.035 }, 0);
+      for (let k = 1; k <= steps; k++) {
+        const at = t0 + (k - 1) * step, name = k === steps ? 'stack' : FORM_ORDER[k % FORM_ORDER.length];
+        tl.to(cards, { ...Object.fromEntries(['x', 'y', 'z', 'rotationY', 'rotationZ', 'scale'].map((p) => [p, (i) => formState(name, i, n, g)[p]])), duration: 0.5, stagger: 0.02 }, at);
+        if (nw >= 2 && words[k]) {
+          tl.to(words[k - 1], { yPercent: -45, autoAlpha: 0, duration: 0.26, ease: 'power2.in' }, at)
+            .fromTo(words[k], { yPercent: 45, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 0.34, ease: 'power3.out' }, at + 0.12)
+            .to(rot, { width: widths[k], duration: 0.4 }, at);
+        }
+      }
+      const end = t0 + (steps - 1) * step + 0.3;
+      tl.add(() => { reveal($('.hero-name', hero)); }, end - 0.15);
+      const sealTw = assembleSeal(false); if (sealTw) tl.add(sealTw, end - 0.05);
+      tl.add(() => { finishWords(); $$('.rv, .img-rv', hero).forEach((el) => { if (!el.classList.contains('in')) reveal(el); }); }, end);
+      let gd = null; const D = (i) => driftState(i, gd || (gd = geo()));
+      tl.to(cards, { ...Object.fromEntries(['x', 'y', 'z', 'rotationY', 'rotationZ', 'scale', 'autoAlpha', 'filter'].map((p) => [p, (i) => D(i)[p]])),
+        duration: 0.55, ease: 'power2.inOut', stagger: 0.02 }, end);
+      skipKeys.forEach((k) => window.addEventListener(k, skip, { passive: true }));
+    };
+    // 等字体与照片准备好（最多 0.9 秒），避免照片还没加载就飞进来
+    const ready = [document.fonts ? document.fonts.ready : null].concat(cards.map((c) => { const img = $('img', c); return img.decode ? img.decode().catch(() => null) : null; }));
+    Promise.race([Promise.all(ready), new Promise((r) => setTimeout(r, 900))]).then(run);
+  }
+
   function startMotion(instant) {
+    initHero(instant);
     initGallery();
     bindLightbox();
     initReveal(instant);
@@ -785,9 +1016,15 @@
       render({ instant: true });
       openPanels.forEach((id) => { const btn = $(`[aria-controls="${CSS.escape(id)}"]`); if (btn) setOpen(btn, true, true); });
       window.scrollTo(0, y);
+    } else if (msg.type === 'profile:intro') {
+      window.scrollTo(0, 0); forceIntro = true; render(); forceIntro = false;
     } else if (msg.type === 'profile:focus' && msg.path) {
+      const m = /^cases\.(\d+)/.exec(msg.path), c = m && list(DATA.cases)[+m[1]];
+      const want = c && c.id ? c.id : (/^(basics|hero|stats|experience|beyond|projects|publications|leadership|about|education|awards|skills|gallery|contact|contacts)\b/.test(msg.path) ? '' : route);
+      if (want !== route) go(want, '', true);
       setFocus(msg.path, true);
     } else if (msg.type === 'profile:scrollTo' && msg.id) {
+      if (route) go('', msg.id, true);
       const el = document.getElementById(msg.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });

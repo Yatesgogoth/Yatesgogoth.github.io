@@ -12,7 +12,7 @@ window.PROFILE = {
       "zh": "把用户洞察转化为可衡量增长的市场运营者 · UCL 市场营销科学硕士 · 安克 DTC、网易直播、社群增长",
       "en": "A marketer turning consumer insight into measurable growth · MSc Marketing Science, UCL · Anker DTC, NetEase live ops, community growth"
     },
-    "defaultLang": "zh",
+    "defaultLang": "en",
     "defaultTheme": "light",
     "accent": "#2f4a3a",
     "showEditorLink": false,
@@ -20,8 +20,8 @@ window.PROFILE = {
   },
   "ui": {
     "ctaWork": {
-      "zh": "查看精选案例",
-      "en": "View selected work"
+      "zh": "查看我的经历",
+      "en": "Explore my work"
     },
     "ctaContact": {
       "zh": "联系我",
@@ -178,6 +178,22 @@ window.PROFILE = {
     "related": {
       "zh": "相关经历",
       "en": "Related"
+    },
+    "caseStudy": {
+      "zh": "阅读完整案例",
+      "en": "Read the case study"
+    },
+    "backToWork": {
+      "zh": "返回经历",
+      "en": "Back to experience"
+    },
+    "nextCase": {
+      "zh": "下一个案例",
+      "en": "Next case"
+    },
+    "inDetail": {
+      "zh": "具体做了什么",
+      "en": "In detail"
     }
   },
   "basics": {
@@ -189,13 +205,14 @@ window.PROFILE = {
       "zh": "Tianhong (Yates) Huang",
       "en": "Call me Yates · 黄天虹"
     },
-    "brand": {
-      "zh": "黄天虹 · Yates",
-      "en": "Tianhong (Yates) Huang"
-    },
+    "brand": "Yates",
     "headline": {
       "zh": "把用户洞察转化为*可衡量增长*的市场运营者。",
       "en": "A marketer turning consumer insight into *measurable growth*."
+    },
+    "slogan": {
+      "zh": "超越技术，*创造人的价值。*",
+      "en": "Go beyond technology. *Create human value.*"
     },
     "initials": "TH",
     "avatar": "assets/photos/portrait.jpg",
@@ -224,9 +241,43 @@ window.PROFILE = {
       "en": "Tianhong (Yates) Huang — London, 2026"
     }
   },
+  "hero": {
+    "rotatingWords": [
+      {
+        "zh": "用户洞察",
+        "en": "consumer insight"
+      },
+      {
+        "zh": "店铺流量",
+        "en": "storefront traffic"
+      },
+      {
+        "zh": "直播观众",
+        "en": "live audiences"
+      },
+      {
+        "zh": "线上社群",
+        "en": "online communities"
+      },
+      {
+        "zh": "用户洞察",
+        "en": "consumer insight"
+      }
+    ],
+    "universePhotos": [
+      "assets/photos/life/img_6206.jpg",
+      "assets/photos/life/img_1675.jpg",
+      "assets/photos/life/img_6195.jpg",
+      "assets/photos/life/img_1354.jpg",
+      "assets/photos/life/img_1724.jpg",
+      "assets/photos/life/img_6167.jpg",
+      "assets/photos/life/img_5028.jpg"
+    ],
+    "playIntro": true
+  },
   "stats": [
     {
-      "prefix": "¥",
+      "prefix": "€",
       "value": {
         "zh": "198",
         "en": "1.98"
@@ -269,22 +320,6 @@ window.PROFILE = {
     }
   ],
   "sections": [
-    {
-      "id": "work",
-      "enabled": true,
-      "nav": {
-        "zh": "精选成果",
-        "en": "Work"
-      },
-      "title": {
-        "zh": "精选成果",
-        "en": "Selected *Impact*"
-      },
-      "intro": {
-        "zh": "三个案例，概括我在增长、直播与社群运营上的工作方式，以及它们带来的结果。",
-        "en": "Three cases that show how I work — and what it delivered — across growth, live operations and community."
-      }
-    },
     {
       "id": "experience",
       "enabled": true,
@@ -370,8 +405,8 @@ window.PROFILE = {
         "en": "Consumer electronics · Cross-border DTC"
       },
       "summary": {
-        "zh": "在德国官网与 TikTok Shop 两个阵地上，用活动机制、资源位与流量分析，把四场品牌大促做成了 ¥198 万 GMV。",
-        "en": "Across Anker's German storefront and TikTok Shop, I used campaign mechanics, merchandising and traffic analysis to turn four brand campaigns into ¥1.98M GMV."
+        "zh": "在德国官网与 TikTok Shop 两个阵地上，用活动机制、资源位与流量分析，把四场品牌大促做成了 €198 万 GMV。",
+        "en": "Across Anker's German storefront and TikTok Shop, I used campaign mechanics, merchandising and traffic analysis to turn four brand campaigns into €1.98M GMV."
       },
       "challenge": {
         "zh": "德国站要在 Summer Sale、Back to School、Prime Day 等节点集中放量，同时争取年轻新客，并让新开的 TikTok 渠道与官网形成合力。",
@@ -424,14 +459,14 @@ window.PROFILE = {
         }
       ],
       "outcome": {
-        "zh": "Summer Sale ¥92 万、Back to School ¥73 万；页面留存率 +30%、核心品类转化率 +25%；爆款 A1695 季度销售额 ¥19 万。",
-        "en": "Summer Sale ¥920k and Back to School ¥730k; page retention +30% and core-category conversion +25%; hero SKU A1695 reached ¥190k in a quarter."
+        "zh": "Summer Sale €92 万、Back to School €73 万；页面留存率 +30%、核心品类转化率 +25%；爆款 A1695 季度销售额 €19 万。",
+        "en": "Summer Sale €920k and Back to School €730k; page retention +30% and core-category conversion +25%; hero SKU A1695 reached €190k in a quarter."
       },
       "metrics": [
         {
           "value": {
-            "zh": "¥198万",
-            "en": "¥1.98M"
+            "zh": "€198万",
+            "en": "€1.98M"
           },
           "label": {
             "zh": "4 场大促 GMV",
@@ -497,24 +532,24 @@ window.PROFILE = {
             "label": "Summer Sale",
             "value": 92,
             "display": {
-              "zh": "¥92 万",
-              "en": "¥920k"
+              "zh": "€92 万",
+              "en": "€920k"
             }
           },
           {
             "label": "Back to School",
             "value": 73,
             "display": {
-              "zh": "¥73 万",
-              "en": "¥730k"
+              "zh": "€73 万",
+              "en": "€730k"
             }
           },
           {
             "label": "On the Go",
             "value": 33,
             "display": {
-              "zh": "¥33 万",
-              "en": "¥330k"
+              "zh": "€33 万",
+              "en": "€330k"
             }
           }
         ],
@@ -942,6 +977,8 @@ window.PROFILE = {
         "zh": "Anker Innovations",
         "en": "安克创新"
       },
+      "logoImage": "assets/logos/anker.svg",
+      "logo": "A",
       "role": {
         "zh": "DTC 官网运营实习生（德国站）",
         "en": "DTC Website Operations Intern, Germany"
@@ -956,8 +993,8 @@ window.PROFILE = {
         "en": "DTC growth"
       },
       "oneLiner": {
-        "zh": "运营德国官网与 TikTok Shop，4 场大促累计 GMV ¥198 万。",
-        "en": "Ran the German storefront and TikTok Shop — ¥1.98M GMV across four campaigns."
+        "zh": "运营德国官网与 TikTok Shop，4 场大促累计 GMV €198 万。",
+        "en": "Ran the German storefront and TikTok Shop — €1.98M GMV across four campaigns."
       },
       "caseId": "anker",
       "summary": {
@@ -967,8 +1004,8 @@ window.PROFILE = {
       "metrics": [
         {
           "value": {
-            "zh": "¥198万",
-            "en": "¥1.98M"
+            "zh": "€198万",
+            "en": "€1.98M"
           },
           "label": {
             "zh": "大促 GMV",
@@ -1014,8 +1051,8 @@ window.PROFILE = {
             "en": "Campaign operations"
           },
           "text": {
-            "zh": "主导 / 核心参与 4 场品牌大促，累计 GMV 198 万：Summer Sale 斩获 92 万；Back to School 创新引入「学生认证」新客机制，单场 73 万、新客占比 +40%；Prime Day 同比 +96%。",
-            "en": "Led or co-led 4 brand campaigns totalling ¥1.98M GMV: Summer Sale ¥920k; introduced a “student verification” acquisition mechanic for Back to School (¥730k, new-customer share +40%); Prime Day +96% YoY."
+            "zh": "主导 / 核心参与 4 场品牌大促，累计 GMV €198 万：Summer Sale 斩获 €92 万；Back to School 创新引入「学生认证」新客机制，单场 €73 万、新客占比 +40%；Prime Day 同比 +96%。",
+            "en": "Led or co-led 4 brand campaigns totalling €1.98M GMV: Summer Sale €920k; introduced a “student verification” acquisition mechanic for Back to School (€730k, new-customer share +40%); Prime Day +96% YoY."
           }
         },
         {
@@ -1034,15 +1071,15 @@ window.PROFILE = {
             "en": "Data-driven optimisation"
           },
           "text": {
-            "zh": "用内部数据工具优化资源位分配，推动爆款 A1695 季度销售额达 19 万；以 GA4 + Clarity 拆解流量路径，输出 3 份优化报告，官网整体流量环比 +85.42%，付费流量转化效率 +414%。",
-            "en": "Re-allocated merchandising slots with internal BI tools, taking hero SKU A1695 to ¥190k in a quarter; mapped traffic paths in GA4 + Clarity and wrote 3 optimisation reports — site traffic +85.42% MoM, paid-traffic conversion efficiency +414%."
+            "zh": "用内部数据工具优化资源位分配，推动爆款 A1695 季度销售额达 €19 万；以 GA4 + Clarity 拆解流量路径，输出 3 份优化报告，官网整体流量环比 +85.42%，付费流量转化效率 +414%。",
+            "en": "Re-allocated merchandising slots with internal BI tools, taking hero SKU A1695 to €190k in a quarter; mapped traffic paths in GA4 + Clarity and wrote 3 optimisation reports — site traffic +85.42% MoM, paid-traffic conversion efficiency +414%."
           }
         }
       ],
       "details": [
         {
-          "zh": "组织执行 On the Go（销售 33 万）、Summer Sale、Prime Day、Back to School 等品牌活动。",
-          "en": "Executed On the Go (¥330k), Summer Sale, Prime Day and Back to School campaigns."
+          "zh": "组织执行 On the Go（销售 €33 万）、Summer Sale、Prime Day、Back to School 等品牌活动。",
+          "en": "Executed On the Go (€330k), Summer Sale, Prime Day and Back to School campaigns."
         },
         {
           "zh": "通过 PSI 系统监控库存，使备货节奏与大促销售预测保持一致。",
@@ -1066,6 +1103,8 @@ window.PROFILE = {
         "zh": "网易互动娱乐",
         "en": "网易互动娱乐"
       },
+      "logoImage": "assets/logos/netease-games.png",
+      "logo": "N",
       "role": {
         "zh": "赛事直播运营实习生",
         "en": "Esports Live-stream Operations Intern"
@@ -1189,6 +1228,8 @@ window.PROFILE = {
         "zh": "TransFlotage",
         "en": "人造岛科技文化（深圳）"
       },
+      "logoImage": "",
+      "logo": "TF",
       "role": {
         "zh": "社群运营实习生",
         "en": "Community Operations Intern"
@@ -1303,6 +1344,8 @@ window.PROFILE = {
         "zh": "东莞思科德新材料科技",
         "en": "东莞思科德新材料科技"
       },
+      "logoImage": "",
+      "logo": "SK",
       "role": {
         "zh": "跨境电商运营实习生",
         "en": "Cross-border E-commerce Intern"
@@ -1990,8 +2033,8 @@ window.PROFILE = {
         "en": "I graduated from Macao Polytechnic University with an English-taught BBA in Marketing (GPA 3.6/4, top 3 in cohort), and since September 2026 I've been reading an MSc in Marketing Science at UCL School of Management."
       },
       {
-        "zh": "我的经历横跨跨境电商、游戏直播与社群运营：在安克创新负责德国官网运营，4 场大促累计 GMV 198 万；在网易游戏统筹 50+ 场头部电竞赛事直播；也从零搭建过 300+ 人的用户社群。",
-        "en": "My work spans e-commerce, gaming and community: running Anker's German storefront through four campaigns worth ¥1.98M, coordinating 50+ flagship esports broadcasts at NetEase Games, and building a 300+ member community from scratch."
+        "zh": "我的经历横跨跨境电商、游戏直播与社群运营：在安克创新负责德国官网运营，4 场大促累计 GMV €198 万；在网易游戏统筹 50+ 场头部电竞赛事直播；也从零搭建过 300+ 人的用户社群。",
+        "en": "My work spans e-commerce, gaming and community: running Anker's German storefront through four campaigns worth €1.98M, coordinating 50+ flagship esports broadcasts at NetEase Games, and building a 300+ member community from scratch."
       }
     ],
     "facts": [
