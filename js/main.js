@@ -88,7 +88,7 @@
   }
   const universeHtml = () => {
     const photos = list((DATA.hero || {}).universePhotos).map(t).filter(Boolean);
-    return photos.length ? `<div class="universe" aria-hidden="true"${E('hero.universePhotos')}><div class="u-stage">${photos.map((p) => `<figure class="u-card"><img src="${esc(p)}" alt="" decoding="async" /></figure>`).join('')}</div></div>` : '';
+    return photos.length ? `<div class="universe" aria-hidden="true"${E('hero.universePhotos')}><div class="u-stage">${photos.map((p) => `<figure class="u-card"><img ${imgSrc(p, '(max-width: 700px) 130px, 220px')} alt="" decoding="async" /></figure>`).join('')}</div></div>` : '';
   };
 
   /* ================= 2. 渲染 ================= */
@@ -137,7 +137,7 @@
           ${has(b.avatar) ? `
           <figure class="portrait rv" style="--d:1"${E('basics.avatar')}>
             <span class="orbit" aria-hidden="true"><i></i></span>
-            <div class="frame img-rv"><img src="${esc(t(b.avatar))}" alt="${T(b.avatarAlt) || plain(b.name)}" fetchpriority="high" /></div>
+            <div class="frame img-rv"><img ${imgSrc(t(b.avatar), '(max-width: 900px) 180px, 260px')} alt="${T(b.avatarAlt) || plain(b.name)}" fetchpriority="high" /></div>
           </figure>` : ''}
         </div>
         ${list(DATA.stats).some((s) => has(s.value)) ? `
@@ -166,9 +166,20 @@
   };
   /* 内容中的照片：点击可放大；alt 来自 profile.js */
   const ctxPhoto = (x, base, small) => (has(x.image) ? `
-    <button class="ctx-photo${small ? ' small' : ''}" data-zoom data-src="${esc(t(x.image))}" data-cap="${T(x.imageAlt)}" aria-label="${ui('enlarge')}: ${T(x.imageAlt)}"${E(`${base}.image`)}>
-      <img src="${esc(t(x.image))}" alt="${T(x.imageAlt)}" loading="lazy" /><span class="zoom" aria-hidden="true">${icon('plus')}</span>
+    <button class="ctx-photo${small ? ' small' : ''}" data-zoom data-src="${esc(bigSrc(t(x.image)))}" data-cap="${T(x.imageAlt)}" aria-label="${ui('enlarge')}: ${T(x.imageAlt)}"${E(`${base}.image`)}>
+      <img ${imgSrc(t(x.image), '(max-width: 600px) 90vw, 360px')} alt="${T(x.imageAlt)}" loading="lazy" decoding="async" /><span class="zoom" aria-hidden="true">${icon('plus')}</span>
     </button>` : '');
+  /* 照片按屏幕选尺寸：发布版里 build.py 会生成 480 / 960 / 1600 宽的 WebP，并把清单放进 window.IMAGES；
+     本地预览没有清单时直接用原图。sizes = 这张图在页面上大约显示多宽，浏览器据此挑最合适的文件 */
+  const IMGS = () => window.IMAGES || {};
+  function imgSrc(path, sizes) {
+    const m = IMGS()[path];
+    if (!m || !list(m.v).length) return `src="${esc(path)}"`;
+    const mid = m.v[Math.min(1, m.v.length - 1)][1];
+    return `src="${esc(mid)}" srcset="${m.v.map(([w, f]) => `${esc(f)} ${w}w`).join(', ')}" sizes="${sizes}" width="${m.w}" height="${m.h}"`;
+  }
+  const bigSrc = (path) => { const m = IMGS()[path]; return m && list(m.v).length ? m.v[m.v.length - 1][1] : path; };   // 点开看大图时用
+
   const tagsHtml = (arr, base) => (list(arr).some(has) ? `<div class="tags"${E(base)}>${list(arr).filter(has).map((x) => `<span>${T(x)}</span>`).join('')}</div>` : '');
 
   /* 案例右侧的视觉：优先使用真实图片；没有图片时用基于真实数据的图表 */
@@ -177,7 +188,7 @@
     const head = `<div class="visual-head mono"><span${E(`${P}.title`)}>${T(v.title)}</span><span>Fig. ${pad(ci + 1)}</span></div>`;
     const foot = has(v.note) ? `<p class="visual-foot"${E(`${P}.note`)}>${T(v.note)}</p>` : '';
     if (has(v.image)) {
-      return `<figure class="visual visual-img rv"${E(`${P}.image`)}><img src="${esc(t(v.image))}" alt="${T(v.imageAlt)}" loading="lazy" />${has(v.title) ? `<figcaption>${T(v.title)}</figcaption>` : ''}</figure>`;
+      return `<figure class="visual visual-img rv"${E(`${P}.image`)}><img ${imgSrc(t(v.image), '(max-width: 900px) 100vw, 920px')} alt="${T(v.imageAlt)}" loading="lazy" decoding="async" />${has(v.title) ? `<figcaption>${T(v.title)}</figcaption>` : ''}</figure>`;
     }
     let body = '';
     if (v.type === 'bars') {
@@ -229,7 +240,7 @@
           ${items.map(([x, i], k) => `
             <figure class="g-card"${E(`gallery.items.${i}`)}>
               <button class="g-img" data-zoom data-group="gallery" data-index="${k}" aria-label="${ui('enlarge')}: ${T(x.alt) || T(x.caption)}">
-                <img src="${esc(t(x.image))}" alt="${T(x.alt)}" loading="lazy" draggable="false" style="object-position:${esc(x.focus || '50% 40%')}" />
+                <img ${imgSrc(t(x.image), '(max-width: 600px) 72vw, 280px')} alt="${T(x.alt)}" loading="lazy" decoding="async" draggable="false" style="object-position:${esc(x.focus || '50% 40%')}" />
               </button>
               <figcaption>
                 <span class="mono">${T(x.date)}</span>
@@ -357,7 +368,7 @@
       return `
       <div class="profile-grid">
         <aside class="profile-side">
-          ${has(b.avatarFormal) ? `<figure${E('basics.avatarFormal')}><div class="frame img-rv"><img src="${esc(t(b.avatarFormal))}" alt="${T(b.avatarAlt) || plain(b.name)}" loading="lazy" /></div></figure>` : ''}
+          ${has(b.avatarFormal) ? `<figure${E('basics.avatarFormal')}><div class="frame img-rv"><img ${imgSrc(t(b.avatarFormal), '(max-width: 560px) 240px, (max-width: 900px) 200px, 380px')} loading="lazy" alt="${T(b.avatarAlt) || plain(b.name)}" loading="lazy" /></div></figure>` : ''}
           <dl class="facts">${each(a.facts, (f) => shown(f) && has(f.value), (f, i) => `<div${E(`about.facts.${i}`)}><dt class="mono">${T(f.label)}</dt><dd>${T(f.value)}</dd></div>`)}</dl>
         </aside>
         <div>
@@ -762,7 +773,7 @@
       const el = e.target.closest('[data-zoom]'); if (!el) return;
       e.preventDefault();
       if (el.dataset.group === 'gallery') {
-        const items = list((DATA.gallery || {}).items).filter((x) => has(x.image)).map((x) => ({ src: t(x.image), alt: t(x.alt), cap: [t(x.caption), t(x.date)].filter(Boolean).join(' · ') }));
+        const items = list((DATA.gallery || {}).items).filter((x) => has(x.image)).map((x) => ({ src: bigSrc(t(x.image)), alt: t(x.alt), cap: [t(x.caption), t(x.date)].filter(Boolean).join(' · ') }));
         openLightbox(items, Number(el.dataset.index) || 0);
       } else {
         openLightbox([{ src: el.dataset.src, alt: el.dataset.cap, cap: el.dataset.cap }], 0);
