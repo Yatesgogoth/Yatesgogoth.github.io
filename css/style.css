@@ -168,10 +168,12 @@ p, li, dd { text-wrap: pretty; }
 .rot-w { display: inline-block; transition: color .9s var(--ease); }
 .rot-w:not([data-final]) { position: absolute; left: 0; top: 0; visibility: hidden; }
 .rot.live .rot-w { position: absolute; left: 0; top: 0; color: var(--signal-ink); }
-/* 像素印章 */
-.px-seal { width: 44px; height: 44px; border: 0; }
-.px-seal svg { width: 100%; height: 100%; stroke: none; overflow: visible; }
-.px-seal rect { fill: var(--accent); transition: fill .8s var(--ease); }
+/* 个人标志（TH 衬线字母） */
+.mark { display: inline-flex; flex-shrink: 0; color: var(--accent); line-height: 0; }
+.mark svg { width: auto; height: 100%; fill: currentColor; stroke: none; overflow: visible; }
+.mark-sm { height: 26px; }
+.mark-hero { height: 40px; }
+.px-seal rect { transition: fill .8s var(--ease); }
 .px-seal.charging rect { fill: var(--signal); transition: none; }
 @keyframes pulse { 50% { opacity: .35; } }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(28px, 5vw, 72px); align-items: center; padding-top: clamp(36px, 6vw, 88px); }
@@ -324,7 +326,7 @@ p, li, dd { text-wrap: pretty; }
 .job-row { display: grid; grid-template-columns: 150px minmax(0, 2.2fr) minmax(0, 3fr) minmax(0, 2fr) 36px; gap: 20px; align-items: start; padding: 22px 0; transition: background-color .3s; }
 .job-row:hover { background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
 .job-period { color: var(--muted); padding-top: 4px; }
-.job-company { font-family: var(--head); font-size: clamp(24px, 1.6vw, 31px); line-height: 1.15; }
+.job-company { font-family: var(--head); font-weight: 400; letter-spacing: -.01em; font-size: clamp(24px, 1.6vw, 31px); line-height: 1.15; }
 .job-logo { height: 30px; margin-bottom: 12px; display: flex; align-items: center; }
 .job-logo img { height: 100%; width: auto; max-width: 140px; object-fit: contain; filter: grayscale(1) contrast(1.1); opacity: .8; transition: filter .4s, opacity .4s; }
 .job-row:hover .job-logo img { filter: none; opacity: 1; }
@@ -363,7 +365,7 @@ p, li, dd { text-wrap: pretty; }
 .bw-group { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 24px clamp(24px, 4vw, 56px); padding: 28px 0 clamp(40px, 5vw, 64px); border-top: 1px solid var(--rule); }
 .bw-group:first-child { border-top: 0; padding-top: 0; }
 .bw-label { color: var(--accent); }
-.bw-title { font-family: var(--head); font-size: clamp(26px, 2.4vw, 34px); line-height: 1.15; margin-top: 8px; }
+.bw-title { font-family: var(--head); font-weight: 400; letter-spacing: -.015em; font-size: clamp(26px, 2.4vw, 34px); line-height: 1.15; margin-top: 8px; }
 :lang(zh) .bw-title { font-weight: 600; font-size: clamp(22px, 2vw, 28px); }
 .bw-intro { margin-top: 10px; color: var(--muted); font-size: 14.5px; max-width: 32ch; }
 .feats { display: grid; gap: 0; }

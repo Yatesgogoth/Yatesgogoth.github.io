@@ -21,6 +21,8 @@
   };
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 网站截图工具 / 搜索引擎爬虫：不播开场动画，直接显示最终画面（否则截图会截到轮播词重叠的中间帧）
+  const IS_BOT = !!navigator.webdriver || /bot|crawl|spider|headless|lighthouse|screenshot|preview/i.test(navigator.userAgent);
   const params = new URLSearchParams(location.search);
   const IS_PREVIEW = params.has('preview');
   let route = params.get('case') || '';   // 非空 = 正在看某个案例详情页
@@ -64,19 +66,19 @@
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'
   };
   const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[n] || ICONS.arrow}</svg>`;
-  const seal = () => `<span class="seal" aria-hidden="true">${T((DATA.basics || {}).initials) || 'TH'}</span>`;
-
-  /* 像素印章：3×5 像素字体拼出缩写，外框也是像素；开场结束时由散落的像素聚合而成 */
-  const PIX = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', G: '011100101101011', H: '101101111101101', I: '111010010010111', J: '001001001101010', K: '101101110101101', L: '100100100100111', M: '101111111101101', N: '110101101101101', O: '010101101101010', P: '110101110100100', Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101', Y: '101101010010010', Z: '111001010100111' };
-  function pixelSeal() {
-    const ini = String(t((DATA.basics || {}).initials) || 'TH').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
-    if (!ini) return seal();
-    const lw = ini.length * 4 - 1, N = Math.max(13, lw + 6), ox = Math.floor((N - lw) / 2), oy = Math.floor((N - 5) / 2);
-    const px = [];
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!x || !y || x === N - 1 || y === N - 1) px.push([x, y]);
-    [...ini].forEach((c, k) => { for (let i = 0; i < 15; i++) if (PIX[c][i] === '1') px.push([ox + k * 4 + (i % 3), oy + Math.floor(i / 3)]); });
-    return `<span class="seal px-seal" aria-hidden="true"><svg viewBox="0 0 ${N} ${N}">${px.map(([x, y]) => `<rect x="${x + 0.08}" y="${y + 0.08}" width=".84" height=".84"/>`).join('')}</svg></span>`;
-  }
+  /* 个人标志：TH 衬线字母（粗竖细横，呼应标题字体）。由 12 个矩形组成，首屏开场结束时这些笔画会飞来拼合。
+     缩写不是 TH 时退回为文字标志。 */
+  const MARK = '<rect x="6" y="11" width="18" height="1.8"/><rect x="6" y="11" width="1.6" height="6"/><rect x="22.4" y="11" width="1.6" height="6"/>'
+    + '<rect x="13" y="12" width="4" height="24.2"/><rect x="10" y="35.4" width="10" height="1.6"/>'
+    + '<rect x="26.5" y="11" width="4" height="26"/><rect x="38" y="11" width="4" height="26"/>'
+    + '<rect x="24.5" y="11" width="8" height="1.6"/><rect x="36" y="11" width="8" height="1.6"/>'
+    + '<rect x="24.5" y="35.4" width="8" height="1.6"/><rect x="36" y="35.4" width="8" height="1.6"/><rect x="30.5" y="23.2" width="7.5" height="1.7"/>';
+  const initials = () => String(t((DATA.basics || {}).initials) || 'TH').trim();
+  const markSvg = (cls) => (initials().toUpperCase() === 'TH'
+    ? `<span class="mark ${cls}" aria-hidden="true"><svg viewBox="5 9 40 30">${MARK}</svg></span>`
+    : `<span class="seal ${cls}" aria-hidden="true">${esc(initials())}</span>`);
+  const seal = () => markSvg('mark-sm');
+  const pixelSeal = () => markSvg('mark-hero px-seal');   // 名字沿用：开场里「拼合」动画找的是 .px-seal 里的 rect
 
   /* 首屏大标题：把「轮播关键词」的最后一个词替换成可轮播的位置；找不到这个词就按原样显示 */
   function headlineHtml(b) {
@@ -810,7 +812,7 @@
     const motion = !!G && !reduceMotion;
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const full = motion && cards.length > 0 && (forceIntro
-      || (!instant && !IS_PREVIEW && cfg.playIntro !== false && (params.has('intro') || !store.get('intro-v5-seen'))));
+      || (!instant && !IS_PREVIEW && !IS_BOT && cfg.playIntro !== false && (params.has('intro') || !store.get('intro-v5-seen'))));
     let tl = null, drifting = [], cancelled = false;
 
     const geo = () => {

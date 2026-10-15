@@ -2164,6 +2164,62 @@ window.PROFILE = {
     },
     "items": [
       {
+        "image": "assets/photos/life/img_1354.jpg",
+        "focus": "54% 50%",
+        "caption": {
+          "zh": "「挑战杯」全国赛",
+          "en": "Challenge Cup national final"
+        },
+        "date": "2025.11",
+        "alt": {
+          "zh": "站在「挑战杯」竞赛背景板前",
+          "en": "In front of the Challenge Cup backdrop"
+        },
+        "link": "#beyond"
+      },
+      {
+        "image": "assets/photos/life/img_6167.jpg",
+        "focus": "46% 50%",
+        "caption": {
+          "zh": "毕业季 · 澳门理工大学",
+          "en": "Graduation · Macao Polytechnic University"
+        },
+        "date": "2026.06",
+        "alt": {
+          "zh": "身穿学位袍站在澳门理工大学标识前",
+          "en": "In graduation gown in front of the MPU sign"
+        },
+        "link": "#profile"
+      },
+      {
+        "image": "assets/photos/life/img_1675.jpg",
+        "focus": "50% 30%",
+        "caption": {
+          "zh": "志愿服务",
+          "en": "Volunteering"
+        },
+        "date": "2025.11",
+        "alt": {
+          "zh": "身穿志愿者服装的自拍",
+          "en": "Selfie in volunteer uniform"
+        },
+        "link": "#beyond"
+      },
+      {
+        "image": "assets/photos/life/img_1724.jpg",
+        "focus": "50% 30%",
+        "caption": {
+          "zh": "日常",
+          "en": "Everyday"
+        },
+        "date": "2025.11",
+        "alt": {
+          "zh": "穿西装的镜前自拍",
+          "en": "Mirror selfie in a suit"
+        },
+        "link": ""
+      },
+      {
         "image": "assets/photos/life/img_6206.jpg",
         "focus": "70% 50%",
         "caption": {
@@ -2176,6 +2232,48 @@ window.PROFILE = {
           "en": "In graduation gown between library shelves"
         },
         "link": "#profile"
+      },
+      {
+        "image": "assets/photos/life/img_3139.jpg",
+        "focus": "50% 30%",
+        "caption": {
+          "zh": "日常",
+          "en": "Everyday"
+        },
+        "date": "2026.02",
+        "alt": {
+          "zh": "穿黑色外套的镜前自拍",
+          "en": "Mirror selfie in a black jacket"
+        },
+        "link": ""
+      },
+      {
+        "image": "assets/photos/life/img_5028.jpg",
+        "focus": "20% 50%",
+        "caption": {
+          "zh": "毕业季 · 霍英东图书馆",
+          "en": "Graduation · Henry Fok Ying Tung Library"
+        },
+        "date": "2026.05",
+        "alt": {
+          "zh": "戴学位帽站在霍英东图书馆标识前",
+          "en": "In cap and gown by the Henry Fok Ying Tung Library sign"
+        },
+        "link": "#profile"
+      },
+      {
+        "image": "assets/photos/life/img_1265.jpg",
+        "focus": "50% 40%",
+        "caption": {
+          "zh": "日常",
+          "en": "Everyday"
+        },
+        "date": "2025.11",
+        "alt": {
+          "zh": "穿西装、挂工作证的自拍",
+          "en": "Selfie in a suit with a lanyard"
+        },
+        "link": ""
       },
       {
         "image": "assets/photos/life/img_6195.jpg",
@@ -2202,104 +2300,6 @@ window.PROFILE = {
         "alt": {
           "zh": "身穿学位袍坐在桌旁、手持学位帽",
           "en": "Seated in graduation gown holding a mortarboard"
-        },
-        "link": ""
-      },
-      {
-        "image": "assets/photos/life/img_6167.jpg",
-        "focus": "46% 50%",
-        "caption": {
-          "zh": "毕业季 · 澳门理工大学",
-          "en": "Graduation · Macao Polytechnic University"
-        },
-        "date": "2026.06",
-        "alt": {
-          "zh": "身穿学位袍站在澳门理工大学标识前",
-          "en": "In graduation gown in front of the MPU sign"
-        },
-        "link": "#profile"
-      },
-      {
-        "image": "assets/photos/life/img_5028.jpg",
-        "focus": "20% 50%",
-        "caption": {
-          "zh": "毕业季 · 霍英东图书馆",
-          "en": "Graduation · Henry Fok Ying Tung Library"
-        },
-        "date": "2026.05",
-        "alt": {
-          "zh": "戴学位帽站在霍英东图书馆标识前",
-          "en": "In cap and gown by the Henry Fok Ying Tung Library sign"
-        },
-        "link": "#profile"
-      },
-      {
-        "image": "assets/photos/life/img_3139.jpg",
-        "focus": "50% 30%",
-        "caption": {
-          "zh": "日常",
-          "en": "Everyday"
-        },
-        "date": "2026.02",
-        "alt": {
-          "zh": "穿黑色外套的镜前自拍",
-          "en": "Mirror selfie in a black jacket"
-        },
-        "link": ""
-      },
-      {
-        "image": "assets/photos/life/img_1724.jpg",
-        "focus": "50% 30%",
-        "caption": {
-          "zh": "日常",
-          "en": "Everyday"
-        },
-        "date": "2025.11",
-        "alt": {
-          "zh": "穿西装的镜前自拍",
-          "en": "Mirror selfie in a suit"
-        },
-        "link": ""
-      },
-      {
-        "image": "assets/photos/life/img_1675.jpg",
-        "focus": "50% 30%",
-        "caption": {
-          "zh": "志愿服务",
-          "en": "Volunteering"
-        },
-        "date": "2025.11",
-        "alt": {
-          "zh": "身穿志愿者服装的自拍",
-          "en": "Selfie in volunteer uniform"
-        },
-        "link": "#beyond"
-      },
-      {
-        "image": "assets/photos/life/img_1354.jpg",
-        "focus": "54% 50%",
-        "caption": {
-          "zh": "「挑战杯」全国赛",
-          "en": "Challenge Cup national final"
-        },
-        "date": "2025.11",
-        "alt": {
-          "zh": "站在「挑战杯」竞赛背景板前",
-          "en": "In front of the Challenge Cup backdrop"
-        },
-        "link": "#beyond"
-      },
-      {
-        "image": "assets/photos/life/img_1265.jpg",
-        "focus": "50% 40%",
-        "caption": {
-          "zh": "日常",
-          "en": "Everyday"
-        },
-        "date": "2025.11",
-        "alt": {
-          "zh": "穿西装、挂工作证的自拍",
-          "en": "Selfie in a suit with a lanyard"
         },
         "link": ""
       }
