@@ -105,12 +105,12 @@
     <a class="skip" href="#main">${lang === 'zh' ? '跳到正文' : 'Skip to content'}</a>
     <nav class="nav" id="nav" aria-label="${lang === 'zh' ? '主导航' : 'Primary'}">
       <div class="wrap nav-row">
-        <a class="brand" href="${to('top')}"${E('basics.brand')}>${seal()}<span class="brand-name">${plain(b.brand || b.name)}</span></a>
+        <a class="brand" href="${to('top')}" aria-label="${plain(b.brand || b.name)} — ${lang === 'zh' ? '回到首页' : 'home'}"${E('basics.brand')}>${seal()}<span class="brand-name">${plain(b.brand || b.name)}</span></a>
         <div class="nav-links" id="nav-links">
           ${sections.map((s, i) => `<a href="${to(esc(s.id))}" data-link="${esc(s.id)}"${E(`sections.${secIndex(s.id)}.nav`)}><span class="n">${pad(i + 1)}</span>${T(s.nav || s.title)}</a>`).join('')}
         </div>
         <div class="nav-tools">
-          <button class="lang-btn" data-lang-toggle aria-label="${lang === 'zh' ? 'Switch to English' : '切换到中文'}">${lang === 'zh' ? '<b>中</b> / EN' : '中 / <b>EN</b>'}</button>
+          <button class="lang-btn" data-lang-toggle aria-label="中 / EN — ${lang === 'zh' ? 'Switch to English' : '切换到中文'}">${lang === 'zh' ? '<b>中</b> / EN' : '中 / <b>EN</b>'}</button>
           <button class="icon-btn theme-btn" id="theme-btn" aria-label="${lang === 'zh' ? '切换深浅色' : 'Toggle dark mode'}"><span class="moon">${icon('moon')}</span><span class="sun">${icon('sun')}</span></button>
           ${sections.some((s) => s.id === 'contact') ? `<a class="nav-cta" href="${to('contact')}">${ui('ctaContact')} ${icon('arrowUR')}</a>` : ''}
           <button class="icon-btn menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">${icon('menu')}</button>
@@ -176,7 +176,8 @@
   const IMGS = () => window.IMAGES || {};
   function imgSrc(path, sizes) {
     const m = IMGS()[path];
-    if (!m || !list(m.v).length) return `src="${esc(path)}"`;
+    if (!m) return `src="${esc(path)}"`;
+    if (!list(m.v).length) return `src="${esc(path)}" width="${m.w}" height="${m.h}"`;   // Logo 等小图：只标尺寸，避免加载时页面跳动
     const mid = m.v[Math.min(1, m.v.length - 1)][1];
     return `src="${esc(mid)}" srcset="${m.v.map(([w, f]) => `${esc(f)} ${w}w`).join(', ')}" sizes="${sizes}" width="${m.w}" height="${m.h}"`;
   }
@@ -256,7 +257,7 @@
             <button class="g-next" aria-label="${ui('next')}">${icon('arrow')}</button>
           </div>
         </div>
-        <div class="gallery-track" id="gallery-track" tabindex="0" role="region" aria-label="${T(g.title)} — ${ui('galleryHint')}">
+        <div class="gallery-track" id="gallery-track" data-lenis-prevent tabindex="0" role="region" aria-label="${T(g.title)} — ${ui('galleryHint')}">
           ${items.map(([x, i], k) => `
             <figure class="g-card"${E(`gallery.items.${i}`)}>
               <button class="g-img" data-zoom data-group="gallery" data-index="${k}" aria-label="${ui('enlarge')}: ${T(x.alt) || T(x.caption)}">
@@ -287,10 +288,10 @@
         const caseObj = list(DATA.cases).find((c) => c.id && c.id === e.caseId);
         return `
         <li class="job rv" id="job-${i}" data-anchor="job-${i}"${E(P)}>
-          <div class="job-row">
+          <div class="job-row"${caseObj ? ` data-go="${esc(caseObj.id)}"` : ''}>
             <div class="job-period mono"${E(`${P}.period`)}>${T(e.period)}</div>
             <div class="job-who">
-              ${has(e.logoImage) || has(e.logo) ? `<div class="job-logo${has(e.logoImage) ? '' : ' mono-mark'}"${E(`${P}.${has(e.logoImage) ? 'logoImage' : 'logo'}`)}>${has(e.logoImage) ? `<img src="${esc(t(e.logoImage))}" alt="${plain(e.company)} logo" loading="lazy" />` : T(e.logo)}</div>` : ''}
+              ${has(e.logoImage) || has(e.logo) ? `<div class="job-logo${has(e.logoImage) ? '' : ' mono-mark'}"${E(`${P}.${has(e.logoImage) ? 'logoImage' : 'logo'}`)}>${has(e.logoImage) ? `<img ${imgSrc(t(e.logoImage), '140px')} alt="${plain(e.company)} logo" loading="lazy" />` : T(e.logo)}</div>` : ''}
               <h3 class="job-company"${E(`${P}.company`)}>${T(e.company)}</h3>
               <div class="job-role"${E(`${P}.role`)}>${T(e.role)}</div>
               <div class="job-loc"${E(`${P}.location`)}>${T(e.location)}</div>
@@ -401,7 +402,7 @@
           ${list(DATA.education).some((e) => has(e.school)) ? `${sub(ui('education'))}
           <div>${each(DATA.education, (e) => has(e.school), (e, i) => `
             <div class="edu rv"${E(`education.${i}`)}>
-              <div class="edu-logo">${has(e.logoImage) ? `<img src="${esc(t(e.logoImage))}" alt="${plain(e.school)} logo" loading="lazy" />` : ''}</div>
+              <div class="edu-logo">${has(e.logoImage) ? `<img ${imgSrc(t(e.logoImage), '64px')} alt="${plain(e.school)} logo" loading="lazy" />` : ''}</div>
               <div>
                 <h3>${T(e.school)}</h3>
                 ${has(e.schoolAlt) ? `<div class="alt">${T(e.schoolAlt)}</div>` : ''}
@@ -721,7 +722,7 @@
     }
     render({ instant: true });
     const el = hash && document.getElementById(hash);
-    if (el) el.scrollIntoView(); else window.scrollTo(0, 0);
+    jumpTo(el ? el.getBoundingClientRect().top + window.scrollY - navH() : 0, true);
   }
   window.addEventListener('popstate', () => { const p = new URLSearchParams(location.search); go(p.get('case'), location.hash.slice(1), false); });
 
@@ -737,7 +738,19 @@
     const onClick = (e) => {
       const r = e.target.closest('a[data-route]');
       if (r && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(r.dataset.route, r.dataset.hash); return; }
-      if (e.target.closest('[data-top]')) { e.preventDefault(); window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); return; }
+      if (e.target.closest('[data-top]')) { e.preventDefault(); jumpTo(0); return; }
+      // 页内锚点（导航、按钮）：平滑滚动开启时交给 Lenis，并让出导航栏高度
+      const anchor = lenis && e.target.closest('a[href^="#"]');
+      if (anchor && anchor.getAttribute('href').length > 1) {
+        const target = document.getElementById(anchor.getAttribute('href').slice(1));
+        if (target) { e.preventDefault(); jumpTo(target.getBoundingClientRect().top + window.scrollY - navH() - 8); history.replaceState(null, '', anchor.getAttribute('href')); return; }
+      }
+      // 整行可点：有案例的经历 → 进入案例页；没有案例的 → 展开 / 收起
+      const row = !e.target.closest('a, button') && e.target.closest('.job-row');
+      if (row) {
+        if (row.dataset.go) { go(row.dataset.go); return; }
+        const tg = $('.job-toggle', row); if (tg) { setOpen(tg, tg.getAttribute('aria-expanded') !== 'true'); return; }
+      }
       const el = e.target.closest('[data-copy]'); if (!el) return; e.preventDefault(); copyText(el.getAttribute('data-copy'));
     };
     app.addEventListener('click', onClick);
@@ -796,6 +809,7 @@
     lbItems = items; lbIndex = index;
     showLb();
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    if (lenis) { lenis.stop(); dlg.addEventListener('close', () => lenis.start(), { once: true }); }
   }
   function showLb() {
     const dlg = $('#lightbox'); const it = lbItems[lbIndex]; if (!dlg || !it) return;
@@ -1116,7 +1130,57 @@
     cleanups.push(stop);
   }
 
+  /* ---------- Phase 3：细节交互（吸附与平滑滚动只在电脑的精确鼠标上启用；手机 / 触屏 / 减少动态效果时关闭） ---------- */
+  const SPLIT = window.SplitText;
+  if (window.gsap && SPLIT) window.gsap.registerPlugin(SPLIT);
+  const fineHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const desktopFx = () => !!window.gsap && fineHover && !reduceMotion && !IS_PREVIEW && !IS_BOT;
+  const navH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+
+  // 惯性平滑滚动（Lenis）：只接管鼠标滚轮，触控板手势与触屏保持原生；整个页面只初始化一次
+  let lenis = null;
+  function initSmooth() {
+    if (lenis || !window.Lenis || !desktopFx() || meta().smoothScroll === false) return;
+    lenis = new window.Lenis({ lerp: 0.12, smoothWheel: true });
+    if (ST) lenis.on('scroll', ST.update);
+    window.gsap.ticker.add((time) => lenis.raf(time * 1000));
+    window.gsap.ticker.lagSmoothing(0);
+  }
+  function jumpTo(y, instant) {
+    if (lenis) lenis.scrollTo(y, { immediate: !!instant || reduceMotion, force: true });
+    else window.scrollTo({ top: y, behavior: instant || reduceMotion ? 'auto' : 'smooth' });
+  }
+
+  // 大标题逐行升起（只用于英文：中文没有空格，按行拆分会出错，保留原来的淡入）
+  function initSplitHeads() {
+    if (!SPLIT || !scrollFx() || IS_PREVIEW || lang !== 'en') return;
+    $$('.sec-title, .cs-title, .closing h2, .gallery-title').forEach((h) => {
+      h.classList.add('split-head');
+      const split = SPLIT.create(h, { type: 'lines', mask: 'lines', autoSplit: true,
+        onSplit: (self) => window.gsap.from(self.lines, { yPercent: 105, duration: 0.95, ease: 'power3.out', stagger: 0.09,
+          scrollTrigger: { trigger: h, start: 'top 88%', once: true } }) });
+      cleanups.push(() => split.revert());
+    });
+  }
+
+  // 磁吸按钮：鼠标靠近时按钮轻微跟随（最多约 10px）
+  function initMagnetic() {
+    if (!desktopFx()) return;
+    const G = window.gsap;
+    $$('.btn, .nav-cta, .job-toggle, .gallery-ctrl button, .theme-btn').forEach((b) => {
+      const xTo = G.quickTo(b, 'x', { duration: 0.4, ease: 'power3' }), yTo = G.quickTo(b, 'y', { duration: 0.4, ease: 'power3' });
+      const m = (e) => { const r = b.getBoundingClientRect();
+        xTo(clamp((e.clientX - r.left - r.width / 2) * 0.3, -10, 10)); yTo(clamp((e.clientY - r.top - r.height / 2) * 0.4, -8, 8)); };
+      const l = () => { xTo(0); yTo(0); };
+      b.addEventListener('pointermove', m); b.addEventListener('pointerleave', l);
+      cleanups.push(() => { b.removeEventListener('pointermove', m); b.removeEventListener('pointerleave', l); });
+    });
+  }
+
   function startMotion(instant) {
+    initSmooth();
+    initSplitHeads();
+    initMagnetic();
     initHero(instant);
     initGallery();
     bindLightbox();
