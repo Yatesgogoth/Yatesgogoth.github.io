@@ -192,28 +192,46 @@
     if (has(v.image)) {
       return `<figure class="visual visual-img rv"${E(`${P}.image`)}><img ${imgSrc(t(v.image), '(max-width: 900px) 100vw, 920px')} alt="${T(v.imageAlt)}" loading="lazy" decoding="async" />${has(v.title) ? `<figcaption>${T(v.title)}</figcaption>` : ''}</figure>`;
     }
+    /* 像素图表：每个小方块带一个 data-t（0–1，滚动进度达到它时点亮），文字标记带 data-at（进度到了才亮）。
+       不运行动画时（无 JS / 减少动态效果）方块默认全亮，图表照样完整。 */
+    const cell = (tt) => `<i class="px" data-t="${tt.toFixed(3)}"></i>`;
     let body = '';
     if (v.type === 'bars') {
-      const max = Math.max(1, ...list(v.items).map((x) => Number(x.value) || 0));
-      body = `<div class="bars">${each(v.items, (x) => has(x.label), (x, i) => `
-        <div class="bar-row"${E(`${P}.items.${i}`)}><span class="lbl">${T(x.label)}</span><span class="val">${T(x.display) || T(x.value)}</span>
-          <div class="bar-track" aria-hidden="true"><i style="--w:${clamp(((Number(x.value) || 0) / max) * 100, 2, 100).toFixed(1)}%"></i></div></div>`)}</div>`;
+      const COLS = 48, items = list(v.items).map((x, i) => [x, i]).filter(([x]) => has(x.label));
+      const max = Math.max(1, ...items.map(([x]) => Number(x.value) || 0));
+      body = `<div class="pxbars">${items.map(([x, i]) => {
+        const n = clamp(Math.round(((Number(x.value) || 0) / max) * COLS), 1, COLS);
+        const cells = Array.from({ length: COLS }, (_, c) => (c < n ? cell(c / COLS) : '<i class="px off"></i>')).join('');
+        return `<div class="pxbar-row"${E(`${P}.items.${i}`)}><span class="lbl">${T(x.label)}</span><span class="val" data-at="${((n - 1) / COLS).toFixed(3)}">${T(x.display) || T(x.value)}</span>
+          <div class="pxbar" aria-hidden="true">${cells}</div></div>`;
+      }).join('')}</div>`;
     } else if (v.type === 'loop') {
-      const center = v.center || {};
+      const center = v.center || {}, N = 72, steps = list(v.steps).filter(has).slice(0, 4);
+      const m = /^(\D*)([\d.]+)(.*)$/.exec(String(t(center.value)));   // 把「50+」拆成 前缀 / 数字 / 后缀，方便随滚动计数
+      const dots = Array.from({ length: N }, (_, i) => { const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+        return `<i class="px" data-t="${(i / N).toFixed(3)}" style="left:${(50 + 34 * Math.cos(a)).toFixed(2)}%;top:${(50 + 34 * Math.sin(a)).toFixed(2)}%"></i>`; }).join('');
       body = `
         <div class="loop"${E(`${P}.steps`)}>
-          <div class="loop-ring" aria-hidden="true"></div>
-          <div class="loop-center"${E(`${P}.center`)}><b>${T(center.value)}</b><span>${T(center.label)}</span></div>
-          ${list(v.steps).filter(has).slice(0, 4).map((s, k) => `<div class="loop-step p${k + 1}" style="--d:${k}"><i>${pad(k + 1)}</i>${T(s)}</div>`).join('')}
+          <div class="loop-ring" aria-hidden="true">${dots}</div>
+          <div class="loop-center"${E(`${P}.center`)}><b${m ? ` data-count-to="${esc(m[2])}" data-pre="${esc(m[1])}" data-suf="${esc(m[3])}"` : ''}>${T(center.value)}</b><span>${T(center.label)}</span></div>
+          ${steps.map((st, k) => `<div class="loop-step p${k + 1}" data-at="${(k / 4 + 0.02).toFixed(3)}"><i>${pad(k + 1)}</i>${T(st)}</div>`).join('')}
         </div>
         ${list(v.lineup).some(has) ? `<div class="lineup"${E(`${P}.lineup`)}>${list(v.lineup).filter(has).map((x) => `<span>${T(x)}</span>`).join('')}</div>` : ''}`;
     } else if (v.type === 'ladder') {
-      const center = v.center || {};
+      const center = v.center || {}, items = list(v.items).map((x, i) => [x, i]).filter(([x]) => has(x.label));
+      const C = 32, R = 10, per = C / Math.max(1, items.length);
+      const heights = Array.from({ length: C }, (_, c) => Math.max(1, Math.ceil(R * Math.pow((c + 1) / C, 1.5))));   // 加速增长的曲线
+      const total = heights.reduce((a, b) => a + b, 0);
+      let k = 0; const groupEnd = [];
+      const cols = heights.map((h, c) => { const col = Array.from({ length: h }, () => cell(k++ / total)).join('');
+        if ((c + 1) % per < 1 || c === C - 1) groupEnd.push((k - 1) / total); return `<span class="pxcol">${col}</span>`; }).join('');
       body = `
         <div class="ladder">
-          <div class="ladder-end start">0</div>
-          <ol>${each(v.items, (x) => has(x.label), (x, i) => `<li${E(`${P}.items.${i}`)}><b>${T(x.label)}</b><span>${T(x.display)}</span></li>`)}</ol>
-          <div class="ladder-end end"${E(`${P}.center`)}>${T(center.value)}<small>${T(center.label)}</small></div>
+          <div class="ladder-chart">
+            <div class="pxladder" aria-hidden="true">${cols}</div>
+            <div class="ladder-axis mono"><span>0</span><span${E(`${P}.center`)} data-at="0.98">${T(center.value)} <small>${T(center.label)}</small></span></div>
+          </div>
+          <ol>${items.map(([x, i], n) => `<li data-at="${(groupEnd[n] || 1).toFixed(3)}"${E(`${P}.items.${i}`)}><b>${T(x.label)}</b><span>${T(x.display)}</span></li>`).join('')}</ol>
         </div>`;
     }
     return `<div class="visual rv" data-viz${E(P)}>${head}${body}${foot}</div>`;
@@ -263,7 +281,7 @@
       if (!items.length) return '';
       const traj = items.slice().reverse().filter(([e]) => has(e.capability));
       return `
-      ${traj.length ? `<div class="trajectory rv"><span class="label mono">${ui('trajectory')}</span>${traj.map(([e, i], k) => `${k ? '<span class="traj-arrow" aria-hidden="true">→</span>' : ''}<span class="traj-step"${E(`experience.${i}.capability`)}><i>${esc(String(t(e.period)).slice(0, 4))}</i>${T(e.capability)}</span>`).join('')}</div>` : ''}
+      ${traj.length ? `<div class="trajectory rv"><span class="traj-slider" aria-hidden="true"></span><span class="label mono">${ui('trajectory')}</span>${traj.map(([e, i], k) => `${k ? '<span class="traj-arrow" aria-hidden="true">→</span>' : ''}<span class="traj-step"${E(`experience.${i}.capability`)}><i>${esc(String(t(e.period)).slice(0, 4))}</i>${T(e.capability)}</span>`).join('')}</div>` : ''}
       <ol class="jobs">${items.map(([e, i]) => {
         const P = `experience.${i}`;
         const caseObj = list(DATA.cases).find((c) => c.id && c.id === e.caseId);
@@ -444,6 +462,29 @@
 
   /* 案例详情页（index.html?case=anker）：首页只放经历摘要，完整故事在这里按「挑战 → 角色 → 方法 → 结果」讲 */
   const caseHref = (id) => { const u = new URLSearchParams(location.search); u.set('case', id); return '?' + esc(u.toString()); };
+  /* 案例的滚动叙事：挑战 → 方法 → 结果。左边（手机上是顶部）是固定的章节目录 + 进度线，读到哪章亮哪章 */
+  function storyHtml(c, P) {
+    const chapters = [
+      [ui('challenge'), has(c.challenge) ? `<p class="cs-lead">${T(c.challenge)}</p>` : '', `${P}.challenge`],
+      [ui('approach'), (has(c.role) ? `<p class="cs-role"${E(`${P}.role`)}><span class="mono">${ui('role')}</span>${T(c.role)}</p>` : '') + stepsHtml(c.approach, `${P}.approach`), ''],
+      [ui('outcome'), has(c.outcome) ? `<p class="cs-lead">${T(c.outcome)}</p>` : '', `${P}.outcome`]
+    ].filter(([, body]) => body);
+    if (!chapters.length) return '';
+    return `
+        <div class="cs-story">
+          <aside class="cs-chapters" aria-hidden="true">
+            <div class="cs-meter"><i></i></div>
+            <ol>${chapters.map(([label], k) => `<li data-ch="${k}"><span class="n">${pad(k + 1)}</span>${label}</li>`).join('')}</ol>
+          </aside>
+          <div class="cs-chapter-list">${chapters.map(([label, body, path], k) => `
+            <section class="cs-chapter" data-ch="${k}"${path ? E(path) : ''}>
+              <h2 class="cs-label mono"><span class="n">${pad(k + 1)}</span> ${label}</h2>
+              <div class="cs-content">${body}</div>
+            </section>`).join('')}
+          </div>
+        </div>`;
+  }
+
   function casePage(c) {
     const ci = list(DATA.cases).indexOf(c), P = `cases.${ci}`;
     const exp = list(DATA.experience).find((e) => e.caseId === c.id);
@@ -465,11 +506,8 @@
         </header>
         <div class="cs-kpis rv" style="--d:2">${kpisHtml(c.metrics, `${P}.metrics`)}</div>
         <div class="cs-visual">${visualHtml(c, ci)}</div>
+        ${storyHtml(c, P)}
         <div class="cs-body">
-          ${block(ui('challenge'), has(c.challenge) ? `<p class="cs-lead">${T(c.challenge)}</p>` : '', `${P}.challenge`)}
-          ${block(ui('role'), has(c.role) ? `<p>${T(c.role)}</p>` : '', `${P}.role`)}
-          ${block(ui('approach'), stepsHtml(c.approach, `${P}.approach`))}
-          ${block(ui('outcome'), has(c.outcome) ? `<p class="cs-lead">${T(c.outcome)}</p>` : '', `${P}.outcome`)}
           ${exp ? block(ui('inDetail'), stepsHtml(exp.bullets, `${EP}.bullets`) + (list(exp.details).some(has) ? `<ul class="extra"${E(`${EP}.details`)}>${list(exp.details).filter(has).map((d) => `<li>${T(d)}</li>`).join('')}</ul>` : '')) : ''}
           ${block(ui('tools'), tagsHtml(c.tools, `${P}.tools`))}
         </div>
@@ -573,7 +611,10 @@
 
   function reveal(el, instant) {
     el.classList.add('in');
-    if (el.hasAttribute('data-count')) $$('.count', el).forEach((c) => countUp(c, instant));
+    if (el.hasAttribute('data-count')) {
+      if (!instant) $$('.proof-num', el).forEach((n, k) => pixelStream(n, k * 0.12));   // 先取样（此时显示的还是最终数字），再开始计数
+      $$('.count', el).forEach((c) => countUp(c, instant));
+    }
   }
   function initReveal(instant) {
     const els = $$('.rv, .img-rv, [data-viz]').filter((el) => !el.closest('.hero.intro'));   // 首屏开场期间由开场动画负责显示
@@ -965,11 +1006,124 @@
     Promise.race([Promise.all(ready), new Promise((r) => setTimeout(r, 900))]).then(run);
   }
 
+  /* ---------- Phase 2：数据像素语言 ----------
+   * 1) 案例图表：滚动经过时像素逐格点亮（跟滚动进度绑定，往回滚会熄灭），最前沿的几格是橙色
+   * 2) 案例正文：章节目录跟随阅读进度
+   * 3) 首屏数字：计数时橙色像素流进数字笔画后消散 */
+  const ST = window.ScrollTrigger;
+  if (window.gsap && ST) window.gsap.registerPlugin(ST);
+  const scrollFx = () => !!(window.gsap && ST) && !reduceMotion;
+  const track = (st) => { cleanups.push(() => st.kill()); return st; };
+
+  function initPixelViz() {
+    if (!scrollFx()) return;   // 跟滚动位置绑定，切换语言 / 页面后也能直接画出当前进度，所以不区分 instant
+    $$('[data-viz]').forEach((viz) => {
+      const cells = $$('[data-t]', viz).map((el) => [el, +el.dataset.t]);
+      if (!cells.length) return;
+      const marks = $$('[data-at]', viz).map((el) => [el, +el.dataset.at]);
+      const counters = $$('[data-count-to]', viz);
+      const paint = (p) => {
+        const done = p >= 0.999;
+        cells.forEach(([el, tt]) => { const on = p >= tt; el.classList.toggle('on', on); el.classList.toggle('edge', on && !done && p - tt < 0.06); });
+        marks.forEach(([el, at]) => el.classList.toggle('on', p >= at));
+        counters.forEach((el) => { const to = parseFloat(el.dataset.countTo), dec = (el.dataset.countTo.split('.')[1] || '').length;
+          el.textContent = el.dataset.pre + (done ? el.dataset.countTo : (to * Math.min(1, p / 0.9)).toFixed(dec)) + el.dataset.suf; });
+      };
+      viz.classList.add('viz-live');
+      paint(0);
+      track(ST.create({ trigger: viz, start: 'top 85%', end: 'bottom 60%', onUpdate: (st) => paint(st.progress), onRefresh: (st) => paint(st.progress) }));
+    });
+  }
+
+  /* 能力主线：往下滚动经历列表时，绿色滑块从 2023 一格格滑到 2025 DTC growth */
+  function initTrajectory() {
+    const tr = $('.trajectory'), jobs = $('.jobs');
+    if (!tr || !jobs || !scrollFx()) return;
+    const steps = $$('.traj-step', tr), slider = $('.traj-slider', tr);
+    if (steps.length < 2 || !slider) return;
+    tr.classList.add('traj-live');
+    let cur = -1;
+    const move = (k, force) => {
+      if (k === cur && !force) return;
+      cur = k;
+      const st = steps[k];
+      slider.style.width = st.offsetWidth + 'px'; slider.style.height = st.offsetHeight + 'px';
+      slider.style.transform = `translate(${st.offsetLeft}px, ${st.offsetTop}px)`;
+      steps.forEach((x, j) => { x.classList.toggle('on', j === k); x.classList.toggle('done', j < k); });
+    };
+    const at = (p) => Math.min(steps.length - 1, Math.floor(p * steps.length));
+    move(0);
+    track(ST.create({ trigger: jobs, start: 'top 75%', end: 'bottom 75%', onUpdate: (st) => move(at(st.progress)), onRefresh: (st) => move(at(st.progress), true) }));
+  }
+
+  function initStory() {
+    const story = $('.cs-story'); if (!story) return;
+    const items = $$('.cs-chapters li', story), chapters = $$('.cs-chapter', story);
+    const setOn = (k) => items.forEach((li, j) => li.classList.toggle('on', j === k));
+    setOn(0);
+    items.forEach((li, k) => li.addEventListener('click', () => {
+      const top = chapters[k].getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64) - 24;
+      window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+    }));
+    // 「方法」里的步骤逐条出现
+    $$('.cs-chapter .steps-list li', story).forEach((li, k) => { li.classList.add('rv'); li.style.setProperty('--d', k); });
+    if (!ST || !window.gsap) return;
+    chapters.forEach((ch, k) => track(ST.create({ trigger: ch, start: 'top 55%', end: 'bottom 55%', onToggle: (st) => { if (st.isActive) setOn(k); } })));
+    track(ST.create({ trigger: $('.cs-chapter-list', story), start: 'top 55%', end: 'bottom 55%', onUpdate: (st) => story.style.setProperty('--p', st.progress.toFixed(4)) }));
+  }
+
+  // 首屏数字：把最终数字画到隐藏画布上取样，得到组成笔画的点；像素从下方飞进这些点，到达后渐隐
+  function pixelStream(num, delay) {
+    const G = window.gsap;
+    if (!G || reduceMotion || IS_BOT) return;
+    const box = num.getBoundingClientRect(); if (!box.width || !box.height) return;
+    const off = document.createElement('canvas'), oc = off.getContext('2d');
+    off.width = Math.ceil(box.width); off.height = Math.ceil(box.height);
+    oc.fillStyle = '#000';
+    $$('.pre, .count, small', num).forEach((el) => {
+      const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+      oc.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      oc.textBaseline = 'alphabetic';
+      oc.fillText(el.textContent, r.left - box.left, r.top - box.top + r.height * 0.82);
+    });
+    const data = oc.getImageData(0, 0, off.width, off.height).data, pts = [], step = 3;
+    for (let y = 0; y < off.height; y += step) for (let x = 0; x < off.width; x += step) if (data[(y * off.width + x) * 4 + 3] > 120) pts.push([x, y]);
+    if (!pts.length) return;
+    while (pts.length > 240) pts.splice(Math.floor(Math.random() * pts.length), 1);
+    const pad = 48, W = box.width + pad * 2, H = box.height + pad * 2, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cv = document.createElement('canvas');
+    cv.className = 'px-stream'; cv.setAttribute('aria-hidden', 'true');
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.cssText = `left:${-pad}px;top:${-pad}px;width:${W}px;height:${H}px`;
+    num.appendChild(cv);
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--signal').trim() || '#ff5b1f';
+    const parts = pts.map(([x, y]) => ({ tx: pad + x, ty: pad + y, sx: pad + Math.random() * box.width, sy: H - Math.random() * pad * 0.6, d: Math.random() * 0.75, dur: 0.55 + Math.random() * 0.35 }));
+    const t0 = performance.now() + (delay || 0) * 1000, end = Math.max(...parts.map((q) => q.d + q.dur));
+    const tick = () => {
+      const tt = (performance.now() - t0) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      parts.forEach((q) => {
+        const k = clamp((tt - q.d) / q.dur, 0, 1); if (k <= 0 || k >= 1) return;
+        const e = 1 - Math.pow(1 - k, 3);
+        ctx.globalAlpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+        ctx.fillRect(q.sx + (q.tx - q.sx) * e, q.sy + (q.ty - q.sy) * e, 2, 2);
+      });
+      if (tt > end) stop();
+    };
+    const stop = () => { G.ticker.remove(tick); cv.remove(); };
+    G.ticker.add(tick);
+    cleanups.push(stop);
+  }
+
   function startMotion(instant) {
     initHero(instant);
     initGallery();
     bindLightbox();
+    initStory();
     initReveal(instant);
+    initTrajectory();
+    initPixelViz();
     initClock();
     initScroll();
   }
