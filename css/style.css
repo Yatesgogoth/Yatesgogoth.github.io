@@ -340,7 +340,7 @@ p, li, dd { text-wrap: pretty; }
 .traj-live .traj-step.on i { color: color-mix(in srgb, var(--on-accent) 70%, transparent); }
 /* 电脑上：滚动经历列表时，能力主线固定在顶部，方便看到滑块移动 */
 @media (min-width: 761px) {
-  .trajectory.traj-live { position: sticky; top: var(--nav-h); z-index: 6; padding: 12px 0; margin-top: -12px; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: top .5s var(--ease); }
+  .trajectory.traj-live { position: sticky; top: var(--nav-h); z-index: 6; padding: 12px 0; margin-top: -12px; background: var(--bg); transition: top .5s var(--ease); }
   body:has(.nav.hidden) .trajectory.traj-live { top: 0; }
 }
 .jobs { border-top: 1px solid var(--rule-strong); }
@@ -458,7 +458,7 @@ p, li, dd { text-wrap: pretty; }
 .honours li { display: grid; grid-template-columns: 90px minmax(0, 1fr) minmax(0, 240px); gap: 16px; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 14.5px; align-items: baseline; }
 .honours li:first-child { border-top: 0; }
 .honours .d { color: var(--muted); }
-.honours .o { font-size: 13px; color: var(--muted); }
+.honours .o { font-family: var(--sans); font-size: 13px; color: var(--muted); }
 .honours .n { font-size: 13px; color: var(--muted); text-align: right; }
 .kit { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .kit h4, .kv h4 { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
@@ -657,7 +657,7 @@ p, li, dd { text-wrap: pretty; }
 @media (max-width: 760px) {
   .cs-story { grid-template-columns: 1fr; gap: 0; }
   /* 手机：章节目录变成导航下方的一条横向进度条 */
-  .cs-chapters { top: var(--nav-h); z-index: 5; flex-direction: column-reverse; gap: 8px; margin: 0 calc(-1 * var(--gutter)); padding: 10px var(--gutter) 0; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: top .5s var(--ease); }
+  .cs-chapters { top: var(--nav-h); z-index: 5; flex-direction: column-reverse; gap: 8px; margin: 0 calc(-1 * var(--gutter)); padding: 10px var(--gutter) 0; background: var(--bg); transition: top .5s var(--ease); }
   body:has(.nav.hidden) .cs-chapters { top: 0; }
   .cs-chapters ol { display: flex; gap: 18px; }
   .cs-meter { width: auto; height: 2px; }
@@ -683,3 +683,8 @@ p, li, dd { text-wrap: pretty; }
 :lang(en) .steps-list strong { font-family: var(--sans); font-size: 15px; }
 :lang(en) .cs-content .extra, :lang(en) .job-detail .extra li { font-size: 16px; }
 :lang(en) .closing .text { font-size: 18.5px; line-height: 1.55; }
+
+/* 列表行标题（比赛、其它职务、论文、奖项）也用衬线，和上面的大条目统一；右侧说明 / 组织名仍是小号 Inter */
+:lang(en) .compact summary .t { font-family: var(--serif); font-size: 19px; font-weight: 500; letter-spacing: -.005em; }
+:lang(en) .compact .body { font-family: var(--serif); font-size: 16.5px; line-height: 1.55; }
+:lang(en) .honours .t { font-family: var(--serif); font-size: 18px; font-weight: 500; line-height: 1.35; }

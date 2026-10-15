@@ -416,7 +416,7 @@
             </div>`)}</div>` : ''}
 
           ${list(DATA.awards).some((x) => has(x.title)) ? `${sub(ui('honours'))}
-          <ul class="honours">${each(DATA.awards, (x) => has(x.title), (x, i) => `<li class="rv"${E(`awards.${i}`)}><span class="d mono">${T(x.date)}</span><span>${T(x.title)}<br><span class="o">${T(x.org)}</span></span><span class="n">${T(x.note)}</span></li>`)}</ul>` : ''}
+          <ul class="honours">${each(DATA.awards, (x) => has(x.title), (x, i) => `<li class="rv"${E(`awards.${i}`)}><span class="d mono">${T(x.date)}</span><span class="t">${T(x.title)}<br><span class="o">${T(x.org)}</span></span><span class="n">${T(x.note)}</span></li>`)}</ul>` : ''}
 
           ${list(s.toolkit).length ? `${sub(ui('toolkit'))}
           <div class="kit rv">${each(s.toolkit, (g) => list(g.items).some(has), (g, i) => `<div${E(`skills.toolkit.${i}`)}><h4>${T(g.name)}</h4><ul>${list(g.items).filter(has).map((x) => `<li>${T(x)}</li>`).join('')}</ul></div>`)}</div>` : ''}
