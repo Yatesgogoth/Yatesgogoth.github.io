@@ -25,7 +25,9 @@
   const IS_BOT = !!navigator.webdriver || /bot|crawl|spider|headless|lighthouse|screenshot|preview/i.test(navigator.userAgent);
   const params = new URLSearchParams(location.search);
   const IS_PREVIEW = params.has('preview');
-  let route = params.get('case') || '';   // 非空 = 正在看某个案例详情页
+  // 详情页路由：?case=anker（案例）或 ?story=drama（故事）；route 为空 = 首页
+  let route = params.get('case') || params.get('story') || '';
+  let kind = !params.get('case') && params.get('story') ? 'story' : 'case';
 
   let DATA = window.PROFILE || {};
   if (params.has('draft')) { try { const d = store.get('profile-draft'); if (d) DATA = JSON.parse(d); } catch (e) { /* 草稿损坏时用文件版本 */ } }
@@ -381,6 +383,20 @@
     },
 
     /* E. 关于我 */
+    /* 故事（戏剧社等）：封面卡片，点进去是故事详情页；没有填内容时整个板块和导航项都不显示 */
+    stories() {
+      const items = storyItems();
+      if (!items.length) return '';
+      return `<div class="story-grid">${items.map(([x, i]) => `
+        <a class="story-card rv" href="${storyHref(x.slug)}" data-route="${esc(x.slug)}" data-kind="story"${E(`stories.items.${i}`)}>
+          ${has(x.cover) ? `<div class="story-cover"><img ${imgSrc(t(x.cover), '(max-width: 760px) 100vw, 640px')} alt="${T(x.coverAlt)}" loading="lazy" decoding="async" /></div>` : ''}
+          <div class="story-meta mono">${has(x.period) ? `<span>${T(x.period)}</span>` : ''}${has(x.org) ? `<span>${T(x.org)}</span>` : ''}</div>
+          <h3 class="story-title">${rich(x.title)}</h3>
+          ${has(x.summary) ? `<p class="story-sum">${T(x.summary)}</p>` : ''}
+          <span class="link">${ui('readStory')} ${icon('arrow')}</span>
+        </a>`).join('')}</div>`;
+    },
+
     profile() {
       const a = DATA.about || {}; const b = DATA.basics || {}; const s = DATA.skills || {};
       const paras = list(a.paragraphs).map((p, i) => [p, i]).filter(([p]) => has(p));
@@ -462,7 +478,9 @@
   };
 
   /* 案例详情页（index.html?case=anker）：首页只放经历摘要，完整故事在这里按「挑战 → 角色 → 方法 → 结果」讲 */
-  const caseHref = (id) => { const u = new URLSearchParams(location.search); u.set('case', id); return '?' + esc(u.toString()); };
+  const detailHref = (k, id) => { const u = new URLSearchParams(location.search); u.delete('case'); u.delete('story'); u.set(k, id); return '?' + esc(u.toString()); };
+  const caseHref = (id) => detailHref('case', id);
+  const storyHref = (id) => detailHref('story', id);
   /* 案例的滚动叙事：挑战 → 方法 → 结果。左边（手机上是顶部）是固定的章节目录 + 进度线，读到哪章亮哪章 */
   function storyHtml(c, P) {
     const chapters = [
@@ -484,6 +502,61 @@
             </section>`).join('')}
           </div>
         </div>`;
+  }
+
+  /* 故事详情页（index.html?story=drama）：开头 → 关键数字 → 封面 → 时间线（每个事件：文字 + 照片 / 视频）→ 收获 */
+  const storyItems = () => list((DATA.stories || {}).items).map((x, i) => [x, i]).filter(([x]) => x && x.show !== false && has(x.title) && has(x.slug));
+  const embed = (src) => `<div class="story-embed"><iframe src="${esc(src)}" title="Video" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+  function videoHtml(url) {
+    const u = String(url || '').trim(); let m;
+    if (!u) return '';
+    if ((m = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{6,})/.exec(u))) return embed(`https://www.youtube-nocookie.com/embed/${m[1]}`);
+    if ((m = /bilibili\.com\/video\/(BV\w+)/i.exec(u))) return embed(`https://player.bilibili.com/player.html?bvid=${m[1]}&autoplay=0&high_quality=1`);
+    if (/\.(mp4|webm)(\?|$)/i.test(u)) return `<video class="story-video" src="${esc(u)}" controls preload="none" playsinline></video>`;
+    return `<a class="link" href="${esc(u)}" target="_blank" rel="noopener">${ui('watchVideo')} ${icon('arrowUR')}</a>`;
+  }
+  function storyPage(x, si) {
+    const P = `stories.items.${si}`;
+    const events = list(x.events).map((e, k) => [e, k]).filter(([e]) => e && (has(e.title) || has(e.text) || list(e.images).some(has) || has(e.video)));
+    const all = storyItems(), at = all.findIndex(([y]) => y === x), next = all.length > 1 ? all[(at + 1) % all.length][0] : null;
+    const photo = (src, cap) => `<button class="ev-photo" data-zoom data-src="${esc(bigSrc(t(src)))}" data-cap="${esc(cap)}" aria-label="${ui('enlarge')}"><img ${imgSrc(t(src), '(max-width: 760px) 100vw, 420px')} alt="${esc(cap)}" loading="lazy" decoding="async" /></button>`;
+    return `
+    <article class="cs story-page" data-anchor="story-top">
+      <div class="wrap">
+        <a class="cs-back mono" href="./#stories" data-route="" data-hash="stories">${icon('arrowL')} ${ui('backToStories')}</a>
+        <header class="cs-head">
+          <div class="case-meta mono rv">
+            ${has(x.period) ? `<span${E(`${P}.period`)}>${T(x.period)}</span>` : ''}${has(x.org) ? `<span${E(`${P}.org`)}>${T(x.org)}</span>` : ''}${has(x.role) ? `<span class="case-no"${E(`${P}.role`)}>${T(x.role)}</span>` : ''}
+          </div>
+          <h1 class="cs-title rv"${E(`${P}.title`)}>${rich(x.title)}</h1>
+          ${has(x.summary) ? `<p class="cs-summary rv" style="--d:1"${E(`${P}.summary`)}>${T(x.summary)}</p>` : ''}
+        </header>
+        <div class="cs-kpis rv" style="--d:2">${kpisHtml(x.numbers, `${P}.numbers`)}</div>
+        ${has(x.cover) ? `<figure class="story-hero rv"${E(`${P}.cover`)}>${photo(x.cover, t(x.coverAlt) || plain(x.title))}</figure>` : ''}
+        ${events.length ? `
+        <section class="story-timeline">
+          <h2 class="cs-label mono">${ui('timeline')}</h2>
+          <ol>${events.map(([e, k]) => {
+            const imgs = list(e.images).filter(has);
+            return `
+            <li class="story-event rv"${E(`${P}.events.${k}`)}>
+              <div class="ev-date mono">${T(e.date)}</div>
+              <div class="ev-body">
+                ${has(e.title) ? `<h3 class="ev-title">${rich(e.title)}</h3>` : ''}
+                ${has(e.text) ? `<p class="ev-text">${T(e.text)}</p>` : ''}
+                ${imgs.length ? `<div class="ev-photos n${Math.min(3, imgs.length)}">${imgs.map((im) => photo(im, plain(e.title))).join('')}</div>` : ''}
+                ${has(e.video) ? videoHtml(t(e.video)) : ''}
+              </div>
+            </li>`;
+          }).join('')}</ol>
+        </section>` : ''}
+        ${list(x.takeaways).some(has) ? `<section class="cs-block rv"${E(`${P}.takeaways`)}><h2 class="cs-label mono">${ui('takeaways')}</h2><div class="cs-content">${stepsHtml(x.takeaways, `${P}.takeaways`)}</div></section>` : ''}
+        ${next ? `
+        <a class="cs-next rv" href="${storyHref(next.slug)}" data-route="${esc(next.slug)}" data-kind="story">
+          <span class="mono">${ui('nextStory')}</span><b>${rich(next.title)}</b>${icon('arrow')}
+        </a>` : ''}
+      </div>
+    </article>`;
   }
 
   function casePage(c) {
@@ -528,6 +601,7 @@
     <section class="section" id="${esc(s.id)}" data-section data-anchor="${esc(s.id)}" aria-labelledby="h-${esc(s.id)}">
       <div class="wrap">
         ${res.raw || `
+        <div class="sec-rule" data-viz aria-hidden="true">${Array.from({ length: 64 }, (_, k) => `<i class="px" data-t="${(k / 64).toFixed(3)}"></i>`).join('')}</div>
         <header class="sec-head rv">
           <div class="sec-num mono"><b>Nº ${pad(n)}</b><span>${esc(enLabel(s))}</span></div>
           <div>
@@ -595,11 +669,13 @@
 
     teardown();
     document.documentElement.classList.toggle('photos-mono', meta().photoStyle === 'mono');
-    const cs = route && list(DATA.cases).find((c) => c && c.id === route && has(c.title));
-    if (route && !cs) route = '';
-    if (cs) document.title = String(t(cs.title)).replace(/\*/g, '') + ' · ' + plain((DATA.basics || {}).brand || (DATA.basics || {}).name);
-    app.innerHTML = cs
-      ? renderNav(visible, true) + '<main id="main">' + casePage(cs) + '</main>' + renderFooter() + lightboxHtml()
+    const cs = kind === 'case' && route && list(DATA.cases).find((c) => c && c.id === route && has(c.title));
+    const stEntry = kind === 'story' && route && storyItems().find(([x]) => x.slug === route);
+    if (route && !cs && !stEntry) route = '';
+    const pageTitle = cs ? cs.title : stEntry ? stEntry[0].title : null;
+    if (pageTitle) document.title = String(t(pageTitle)).replace(/\*/g, '') + ' · ' + plain((DATA.basics || {}).brand || (DATA.basics || {}).name);
+    app.innerHTML = cs || stEntry
+      ? renderNav(visible, true) + '<main id="main">' + (cs ? casePage(cs) : storyPage(stEntry[0], stEntry[1])) + '</main>' + renderFooter() + lightboxHtml()
       : renderNav(visible) + '<main id="main">' + renderHero(visible.some((s) => s.id === 'experience')) + blocks.join('') + '</main>' + renderFooter() + lightboxHtml();
     bindUI();
     if (started) startMotion(opts.instant);
@@ -712,11 +788,12 @@
   }
 
   /* 首页 ⇄ 案例页：用 history 切换，不重新加载页面（也不会重播开场） */
-  function go(id, hash, push) {
-    route = id || '';
+  function go(id, hash, push, k) {
+    route = id || ''; kind = k === 'story' ? 'story' : 'case';
     if (push !== false) {
       const u = new URL(location.href);
-      if (route) u.searchParams.set('case', route); else u.searchParams.delete('case');
+      u.searchParams.delete('case'); u.searchParams.delete('story');
+      if (route) u.searchParams.set(kind, route);
       u.hash = hash || '';
       history.pushState(null, '', u);
     }
@@ -724,7 +801,10 @@
     const el = hash && document.getElementById(hash);
     jumpTo(el ? el.getBoundingClientRect().top + window.scrollY - navH() : 0, true);
   }
-  window.addEventListener('popstate', () => { const p = new URLSearchParams(location.search); go(p.get('case'), location.hash.slice(1), false); });
+  window.addEventListener('popstate', () => {
+    const p = new URLSearchParams(location.search);
+    go(p.get('case') || p.get('story'), location.hash.slice(1), false, !p.get('case') && p.get('story') ? 'story' : 'case');
+  });
 
   function bindUI() {
     const nav = $('#nav'), menu = $('#menu-btn');
@@ -737,7 +817,7 @@
     $$('.toggle, .job-toggle').forEach((btn) => btn.addEventListener('click', () => setOpen(btn, btn.getAttribute('aria-expanded') !== 'true')));
     const onClick = (e) => {
       const r = e.target.closest('a[data-route]');
-      if (r && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(r.dataset.route, r.dataset.hash); return; }
+      if (r && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); go(r.dataset.route, r.dataset.hash, true, r.dataset.kind); return; }
       if (e.target.closest('[data-top]')) { e.preventDefault(); jumpTo(0); return; }
       // 页内锚点（导航、按钮）：平滑滚动开启时交给 Lenis，并让出导航栏高度
       const anchor = lenis && e.target.closest('a[href^="#"]');
@@ -925,6 +1005,11 @@
     const setSize = (g) => hero.style.setProperty('--cw', Math.round(g.cw) + 'px');
     const sizeCards = () => cards.forEach((c) => { const img = $('img', c); const fit = () => { if (img.naturalWidth) c.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight; }; img.complete ? fit() : img.addEventListener('load', fit, { once: true }); });
 
+    // 滚动视差：往下滚时，整层漂浮照片比文字移动得慢一些，形成前后纵深（手机上代替鼠标视差）
+    if (motion && stage && window.ScrollTrigger) {
+      const par = G.to(stage, { y: () => hero.offsetHeight * 0.18, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6, invalidateOnRefresh: true } });
+      cleanups.push(() => { par.scrollTrigger && par.scrollTrigger.kill(); par.kill(); G.set(stage, { clearProps: 'y' }); });
+    }
     const startDrift = () => {
       if (!motion) return;
       drifting = cards.map((c, i) => G.to(c, { x: `+=${((i * 13) % 40) - 20}`, y: `+=${((i * 17) % 30) - 15}`, rotationZ: `+=${((i * 7) % 7) - 3}`,
@@ -1251,8 +1336,12 @@
       window.scrollTo(0, 0); forceIntro = true; render(); forceIntro = false;
     } else if (msg.type === 'profile:focus' && msg.path) {
       const m = /^cases\.(\d+)/.exec(msg.path), c = m && list(DATA.cases)[+m[1]];
-      const want = c && c.id ? c.id : (/^(basics|hero|stats|experience|beyond|projects|publications|leadership|about|education|awards|skills|gallery|contact|contacts)\b/.test(msg.path) ? '' : route);
-      if (want !== route) go(want, '', true);
+      const ms = /^stories\.items\.(\d+)/.exec(msg.path), sx = ms && list((DATA.stories || {}).items)[+ms[1]];
+      let want = route, wk = kind;
+      if (c && c.id) { want = c.id; wk = 'case'; }
+      else if (sx && sx.slug && has(sx.title)) { want = sx.slug; wk = 'story'; }
+      else if (/^(basics|hero|stats|experience|beyond|projects|publications|leadership|about|education|awards|skills|gallery|contact|contacts|stories)\b/.test(msg.path)) want = '';
+      if (want !== route || (want && wk !== kind)) go(want, '', true, wk);
       setFocus(msg.path, true);
     } else if (msg.type === 'profile:scrollTo' && msg.id) {
       if (route) go('', msg.id, true);

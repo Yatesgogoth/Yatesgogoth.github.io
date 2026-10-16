@@ -219,7 +219,7 @@ p, li, dd { text-wrap: pretty; }
 
 /* ---------- 板块框架 ---------- */
 .section { padding-top: clamp(80px, 11vw, 140px); }
-.sec-head { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 24px clamp(24px, 4vw, 56px); padding-top: 16px; border-top: 1px solid var(--rule-strong); margin-bottom: clamp(36px, 5vw, 64px); }
+.sec-head { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 24px clamp(24px, 4vw, 56px); padding-top: 16px; margin-bottom: clamp(36px, 5vw, 64px); }
 .sec-num { color: var(--muted); display: flex; gap: 14px; }
 .sec-num b { color: var(--accent); font-weight: 500; }
 .sec-title { font-family: var(--head); font-weight: var(--hw-display); font-size: clamp(38px, 4.6vw, 66px); line-height: 1.04; letter-spacing: -.02em; }
@@ -698,3 +698,49 @@ html.lenis, html.lenis body { height: auto; }
 /* 逐行升起的标题：拆行后不再需要 balance 排版 */
 .split-head { text-wrap: wrap; }
 .job-row { cursor: pointer; }   /* 整行可点：有案例 → 案例页；没有 → 展开 */
+
+/* ---------- 故事（首页卡片 + 详情页时间线） ---------- */
+.story-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(20px, 3vw, 36px); }
+.story-card { display: flex; flex-direction: column; gap: 10px; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.story-cover { aspect-ratio: 3 / 2; overflow: hidden; background: var(--bg-2); margin-bottom: 6px; }
+.story-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--ease); }
+.story-card:hover .story-cover img { transform: scale(1.03); }
+.story-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); }
+.story-title { font-family: var(--head); font-weight: var(--hw-title); font-size: clamp(22px, 2vw, 28px); line-height: 1.2; letter-spacing: -.01em; transition: color .3s; }
+:lang(zh) .story-title { font-weight: 600; font-size: clamp(19px, 1.7vw, 23px); }
+.story-card:hover .story-title { color: var(--accent); }
+.story-sum { color: var(--ink-2); max-width: 56ch; }
+:lang(en) .story-sum { font-family: var(--serif); font-size: 17px; line-height: 1.55; }
+.story-card .link { width: fit-content; margin-top: auto; font-size: 14px; }
+.story-hero { margin: clamp(40px, 6vw, 72px) 0 0; }
+.story-hero .ev-photo { aspect-ratio: 16 / 9; }
+.story-timeline { margin-top: clamp(48px, 7vw, 96px); padding-top: clamp(24px, 3vw, 36px); border-top: 1px solid var(--rule-strong); }
+.story-timeline ol { margin-top: 18px; }
+.story-event { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: 12px clamp(24px, 4vw, 56px); padding: clamp(24px, 3vw, 36px) 0; border-top: 1px solid var(--rule); }
+.story-event:first-child { border-top: 0; }
+.ev-date { color: var(--accent); padding-top: 6px; }
+.ev-body { display: grid; gap: 14px; max-width: 820px; }
+.ev-title { font-family: var(--head); font-weight: var(--hw-title); font-size: clamp(22px, 2vw, 28px); line-height: 1.2; letter-spacing: -.01em; }
+:lang(zh) .ev-title { font-weight: 600; font-size: clamp(19px, 1.7vw, 23px); }
+.ev-text { color: var(--ink-2); }
+:lang(en) .ev-text { font-family: var(--serif); font-size: 18px; line-height: 1.6; }
+.ev-photos { display: grid; gap: 10px; }
+.ev-photos.n2 { grid-template-columns: 1fr 1fr; }
+.ev-photos.n3 { grid-template-columns: repeat(3, 1fr); }
+.ev-photo { display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--bg-2); cursor: zoom-in; }
+.ev-photos.n1 .ev-photo { aspect-ratio: 16 / 9; }
+.ev-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--ease); }
+.ev-photo:hover img { transform: scale(1.03); }
+.story-embed { position: relative; aspect-ratio: 16 / 9; background: var(--night); }
+.story-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.story-video { width: 100%; aspect-ratio: 16 / 9; background: var(--night); }
+@media (max-width: 760px) {
+  .story-event { grid-template-columns: 1fr; }
+  .ev-photos.n3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* 板块分隔线：64 段细像素线，滚动进入时从左往右画出（前沿橙色）；没有动画时直接是完整的分隔线 */
+.sec-rule { display: grid; grid-template-columns: repeat(64, 1fr); gap: 2px; }
+.sec-rule .px { aspect-ratio: auto; height: 2px; background: var(--rule-strong); }
+.viz-live.sec-rule .px:not(.on) { background: var(--rule); }
+.viz-live.sec-rule .px.edge { background: var(--signal); }

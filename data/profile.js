@@ -195,6 +195,30 @@ window.PROFILE = {
     "inDetail": {
       "zh": "具体做了什么",
       "en": "In detail"
+    },
+    "readStory": {
+      "zh": "阅读故事",
+      "en": "Read the story"
+    },
+    "backToStories": {
+      "zh": "返回故事",
+      "en": "Back to stories"
+    },
+    "nextStory": {
+      "zh": "下一个故事",
+      "en": "Next story"
+    },
+    "timeline": {
+      "zh": "时间线",
+      "en": "Timeline"
+    },
+    "takeaways": {
+      "zh": "收获",
+      "en": "What I took away"
+    },
+    "watchVideo": {
+      "zh": "观看视频",
+      "en": "Watch the video"
     }
   },
   "basics": {
@@ -351,6 +375,22 @@ window.PROFILE = {
       "intro": {
         "zh": "创业、竞赛、研究，以及带领团队把事情做成的经历。",
         "en": "Ventures, competitions, research — and leading teams to deliver."
+      }
+    },
+    {
+      "id": "stories",
+      "enabled": true,
+      "nav": {
+        "zh": "故事",
+        "en": "Stories"
+      },
+      "title": {
+        "zh": "故事",
+        "en": "*Stories*"
+      },
+      "intro": {
+        "zh": "",
+        "en": ""
       }
     },
     {
@@ -2023,6 +2063,72 @@ window.PROFILE = {
       }
     }
   ],
+  "stories": {
+    "items": [
+      {
+        "slug": "",
+        "show": true,
+        "title": {
+          "zh": "",
+          "en": ""
+        },
+        "period": {
+          "zh": "",
+          "en": ""
+        },
+        "org": {
+          "zh": "",
+          "en": ""
+        },
+        "role": {
+          "zh": "",
+          "en": ""
+        },
+        "summary": {
+          "zh": "",
+          "en": ""
+        },
+        "cover": "",
+        "coverAlt": {
+          "zh": "",
+          "en": ""
+        },
+        "numbers": [
+          {
+            "value": "",
+            "label": {
+              "zh": "",
+              "en": ""
+            }
+          }
+        ],
+        "events": [
+          {
+            "date": {
+              "zh": "",
+              "en": ""
+            },
+            "title": {
+              "zh": "",
+              "en": ""
+            },
+            "text": {
+              "zh": "",
+              "en": ""
+            },
+            "images": [],
+            "video": ""
+          }
+        ],
+        "takeaways": [
+          {
+            "zh": "",
+            "en": ""
+          }
+        ]
+      }
+    ]
+  },
   "about": {
     "paragraphs": [
       {
