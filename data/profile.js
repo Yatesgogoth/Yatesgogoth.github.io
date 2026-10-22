@@ -17,7 +17,7 @@ window.PROFILE = {
     "accent": "#2f4a3a",
     "showEditorLink": false,
     "photoStyle": "color",
-    "smoothScroll": true
+    "smoothScroll": false
   },
   "ui": {
     "ctaWork": {

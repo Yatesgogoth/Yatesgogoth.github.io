@@ -19,6 +19,11 @@
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 隐私模式下忽略 */ } }
   };
+  // 本次浏览期间有效（关掉网站再打开会重置）：用于「每次打开网站播一次开场」
+  const session = {
+    get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+  };
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 网站截图工具 / 搜索引擎爬虫：不播开场动画，直接显示最终画面（否则截图会截到轮播词重叠的中间帧）
@@ -947,8 +952,8 @@
     const motion = !!G && !reduceMotion;
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const full = motion && cards.length > 0 && (forceIntro
-      || (!instant && !IS_PREVIEW && !IS_BOT && cfg.playIntro !== false && (params.has('intro') || !store.get('intro-v5-seen'))));
-    let tl = null, drifting = [], cancelled = false;
+      || (!instant && !IS_PREVIEW && !IS_BOT && cfg.playIntro !== false && (params.has('intro') || !session.get('intro-seen'))));
+    let tl = null, drifting = [], cancelled = false, heroVisible = true;
 
     const geo = () => {
       const hb = hero.getBoundingClientRect(), pf = $('.portrait .frame', hero);
@@ -1005,6 +1010,12 @@
     const setSize = (g) => hero.style.setProperty('--cw', Math.round(g.cw) + 'px');
     const sizeCards = () => cards.forEach((c) => { const img = $('img', c); const fit = () => { if (img.naturalWidth) c.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight; }; img.complete ? fit() : img.addEventListener('load', fit, { once: true }); });
 
+    // 首屏滚出屏幕后暂停漂浮动画和鼠标视差，回来再继续（省电、滚动更顺）
+    if (motion && window.ScrollTrigger) {
+      const vis = window.ScrollTrigger.create({ trigger: hero, start: 'top bottom', end: 'bottom top',
+        onToggle: (st) => { heroVisible = st.isActive; drifting.forEach((d) => (heroVisible ? d.resume() : d.pause())); } });
+      cleanups.push(() => vis.kill());
+    }
     // 滚动视差：往下滚时，整层漂浮照片比文字移动得慢一些，形成前后纵深（手机上代替鼠标视差）
     if (motion && stage && window.ScrollTrigger) {
       const par = G.to(stage, { y: () => hero.offsetHeight * 0.18, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6, invalidateOnRefresh: true } });
@@ -1012,7 +1023,7 @@
     }
     const startDrift = () => {
       if (!motion) return;
-      drifting = cards.map((c, i) => G.to(c, { x: `+=${((i * 13) % 40) - 20}`, y: `+=${((i * 17) % 30) - 15}`, rotationZ: `+=${((i * 7) % 7) - 3}`,
+      drifting = cards.map((c, i) => G.to(c, { paused: !heroVisible, x: `+=${((i * 13) % 40) - 20}`, y: `+=${((i * 17) % 30) - 15}`, rotationZ: `+=${((i * 7) % 7) - 3}`,
         duration: 6 + (i % 4) * 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: (i % 3) * 0.4 }));
     };
     const settle = () => { const g = geo(); setSize(g); cards.forEach((c, i) => place(c, driftState(i, g))); };
@@ -1034,7 +1045,7 @@
     if (motion && fine && stage) {
       G.set(stage, { transformOrigin: '50% 50%' });
       const ry = G.quickTo(stage, 'rotationY', { duration: 1.2, ease: 'power3' }), rx = G.quickTo(stage, 'rotationX', { duration: 1.2, ease: 'power3' });
-      onMove = (e) => { ry((e.clientX / window.innerWidth - 0.5) * 8); rx((e.clientY / window.innerHeight - 0.5) * -6); };
+      onMove = (e) => { if (!heroVisible) return; ry((e.clientX / window.innerWidth - 0.5) * 8); rx((e.clientY / window.innerHeight - 0.5) * -6); };
       window.addEventListener('pointermove', onMove, { passive: true });
     }
     cleanups.push(() => {
@@ -1053,7 +1064,7 @@
     }
 
     /* ----- 完整开场 ----- */
-    store.set('intro-v5-seen', '1');
+    session.set('intro-seen', '1');
     hero.classList.add('intro');            // 其余首屏元素先隐藏，由开场结束时显示
     const title = $('.hero-title', hero); if (title) title.classList.add('in');
     if (pixels.length) G.set(pixels, { autoAlpha: 0 });
