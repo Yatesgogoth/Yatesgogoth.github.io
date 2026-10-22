@@ -679,6 +679,9 @@
     if (route && !cs && !stEntry) route = '';
     const pageTitle = cs ? cs.title : stEntry ? stEntry[0].title : null;
     if (pageTitle) document.title = String(t(pageTitle)).replace(/\*/g, '') + ' · ' + plain((DATA.basics || {}).brand || (DATA.basics || {}).name);
+    // 正式网址：首页 = 根网址；案例 / 故事页 = 各自的 ?case= / ?story= 网址（不带语言等其它参数）
+    const canon = $('link[rel="canonical"]');
+    if (canon && /^https?:/.test(location.protocol)) canon.setAttribute('href', location.origin + location.pathname + (route ? `?${kind}=${encodeURIComponent(route)}` : ''));
     app.innerHTML = cs || stEntry
       ? renderNav(visible, true) + '<main id="main">' + (cs ? casePage(cs) : storyPage(stEntry[0], stEntry[1])) + '</main>' + renderFooter() + lightboxHtml()
       : renderNav(visible) + '<main id="main">' + renderHero(visible.some((s) => s.id === 'experience')) + blocks.join('') + '</main>' + renderFooter() + lightboxHtml();
